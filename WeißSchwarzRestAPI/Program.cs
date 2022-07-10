@@ -16,7 +16,7 @@ namespace WSRestAPI
     {
         public static void Main(string[] args)
         {
-            CreateHostBuilder(args).Build().Run();DataToDB Collector
+            CreateHostBuilder(args).Build().Run();
         }
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
