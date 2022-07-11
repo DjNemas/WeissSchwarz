@@ -1,0 +1,16 @@
+{
+  "exclude": [
+    "**/bin",
+    "**/bower_components",
+    "**/jspm_packages",
+    "**/node_modules",
+    "**/obj",
+    "**/platforms"
+  ],
+  // This is just for Instruction
+  // Input your Connection String here and rename this file to config.json
+  // Change the Propertie of this File to: Allway Copy to Dir
+  "ConnectionStrings": {
+    "WSDB": "YOUR CONNECTION STRING HERE;"
+  }
+}
