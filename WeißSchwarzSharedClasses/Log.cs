@@ -11,7 +11,7 @@ namespace WeißSchwarzSharedClasses
 
         private static object logLock = new object();
 
-        private static readonly bool debugMode = false; // Set true if you want to see Debug Console Output 
+        private static readonly bool debugMode = true; // Set true if you want to see Debug Console Output 
         public static void Debug(string msg, bool toFile = false)
         {
             lock (logLock)

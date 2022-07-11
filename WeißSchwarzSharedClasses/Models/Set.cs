@@ -5,6 +5,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Runtime.Serialization;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace WeißSchwarzSharedClasses.Models
@@ -14,26 +15,15 @@ namespace WeißSchwarzSharedClasses.Models
         [Key]
         public int ID { get; set; }
         public string SetID { get; set; }
+
+        [JsonConverter(typeof(JsonStringEnumConverter))]
         public SetType Type { get; set; }
         public string Name { get; set; }
-        public List<Card> Cards
-        {
-            get
-            {
-                return _cards;
-            }
-            set 
-            {
-                _cards = value;
-                NumberOfCards = value.Count();
-            } 
-        }
+        public List<Card> Cards { get; set; }
 
         [NotMapped]
-        private List<Card> _cards { get; set; }
-
-        [NotMapped]
-        public int NumberOfCards { get; set; }
+        [JsonIgnore]
+        public int NumberOfCards { get => Cards.Count(); }
 
     }
 

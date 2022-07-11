@@ -7,6 +7,7 @@ using Microsoft.OpenApi.Models;
 using System;
 using System.IO;
 using System.Reflection;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace WSRestAPI
@@ -35,6 +36,7 @@ namespace WSRestAPI
             services.AddControllers().AddJsonOptions(x =>
             {
                 x.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+                x.JsonSerializerOptions.PropertyNamingPolicy = null;
             });
             services.AddControllers();
             services.AddSwaggerGen(c =>

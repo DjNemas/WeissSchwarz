@@ -4,6 +4,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Runtime.Serialization;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace WeißSchwarzSharedClasses.Models
@@ -15,11 +16,13 @@ namespace WeißSchwarzSharedClasses.Models
         [Key]
         public string LongID { get; set; }
         public string Name { get; set; }
+        [JsonConverter(typeof(JsonStringEnumConverter))]
         public CardType Type { get; set; }
         public int? Level { get; set; }
         public int? Power { get; set; }
         public List<Trigger>? Triggers { get; set; }
         public string Rarity { get; set; }
+        [JsonConverter(typeof(JsonStringEnumConverter))]
         public Color Color { get; set; }
         public int? Cost { get; set; }
         public int? Soul { get; set; }
@@ -28,8 +31,8 @@ namespace WeißSchwarzSharedClasses.Models
         public string? FalvorText { get; set; }
         public string? IllustrationText { get; set; }
         public string ImageURL { get; set; }
+        [JsonConverter(typeof(JsonStringEnumConverter))]
         public Side Side { get; set; }
-
     }
 
     public enum Side
