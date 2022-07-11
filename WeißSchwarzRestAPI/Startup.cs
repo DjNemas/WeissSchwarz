@@ -23,7 +23,15 @@ namespace WSRestAPI
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddCors();
+            services.AddCors(x =>
+            {
+                x.AddPolicy("AllAllowed", x =>
+                {
+                    x.AllowAnyHeader();
+                    x.AllowAnyOrigin();
+                    x.AllowAnyMethod();
+                });
+            });
             services.AddControllers().AddJsonOptions(x =>
             {
                 x.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
@@ -32,28 +40,27 @@ namespace WSRestAPI
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { 
-                    Title = "WSRestAPI",
+                    Title = "Weiß Schwarz Rest API",
                     Version = "v1",
                     Contact = new OpenApiContact()
                     {
                         Name = "Discord: Nemas#0185",
                     },
-                    Description = "Weiß Schwarz Rest API with sets cards etc. data.",
+                    Description = "Database of Sets and Card with ImageURLs!"
                 });
                 c.AddServer(new OpenApiServer()
                 {
-                    Url = @"https://djnemashome.de:3940",
+                    Url = @"https://djnemashome.de:3939",
                     Description = "With SSL"
                 });
                 c.AddServer(new OpenApiServer()
                 {
-                    Url = @"http://djnemashome.de:2500",
+                    Url = @"http://djnemashome.de:1337",
                     Description = "Without SSL"
                 });
                 var xmlFilename = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
                 c.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, xmlFilename));
             });
-            //services.AddSwaggerDocument();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -65,20 +72,20 @@ namespace WSRestAPI
                 app.UseDeveloperExceptionPage();
                 app.UseSwagger();
                 app.UseSwaggerUI(c => {
-                    c.SwaggerEndpoint("/swagger/v1/swagger.json", "WSRestAPI v1");
+                    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Weiß Schwarz Rest API v1");
                     });
             }
-
+            else
+            {
+                app.UseSwagger();
+                app.UseSwaggerUI(c => {
+                    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Weiß Schwarz Rest API v1");
+                });
+            }
             
             app.UseHttpsRedirection();
 
-            app.UseCors(builder =>
-            {
-                builder
-                .AllowAnyOrigin()
-                .AllowAnyMethod()
-                .AllowAnyHeader();
-            });
+            app.UseCors("AllAllowed");
 
             app.UseRouting();
             

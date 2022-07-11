@@ -13,11 +13,28 @@ namespace WeißSchwarzSharedClasses.Models
     {
         [Key]
         public int ID { get; set; }
-
         public string SetID { get; set; }
         public SetType Type { get; set; }
         public string Name { get; set; }
-        public List<Card> Cards { get; set; }
+        public List<Card> Cards
+        {
+            get
+            {
+                return _cards;
+            }
+            set 
+            {
+                _cards = value;
+                NumberOfCards = value.Count();
+            } 
+        }
+
+        [NotMapped]
+        private List<Card> _cards { get; set; }
+
+        [NotMapped]
+        public int NumberOfCards { get; set; }
+
     }
 
     public enum SetType

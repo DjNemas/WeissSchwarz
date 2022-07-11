@@ -39,10 +39,19 @@ namespace WeißSchwarzDBUpdater
 
         public void StartCollect()
         {
-            mainWebsite.driver.Navigate().GoToUrl(wsURL);
-            mainWindowName = mainWebsite.driver.CurrentWindowHandle;
-            var setLinkElements = SelectSetLinks(mainWebsite.driver);
-            IterateClickOnSet(setLinkElements);
+            while(true)
+            {
+                mainWebsite.driver.Navigate().GoToUrl(wsURL);
+                mainWindowName = mainWebsite.driver.CurrentWindowHandle;
+                var setLinkElements = SelectSetLinks(mainWebsite.driver);
+                IterateClickOnSet(setLinkElements);
+
+                // Wait until next Day 0 Hour and redo the collection.
+                DateTime nextDay = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, DateTime.UtcNow.Day, 0, 0, 0).AddDays(1);
+                TimeSpan waitUntilNextDay = nextDay.Subtract(DateTime.UtcNow);
+                Task.Delay(waitUntilNextDay).Wait();
+            }
+            
         }
 
         private void IterateClickOnSet(ReadOnlyCollection<IWebElement> sets)
@@ -51,8 +60,11 @@ namespace WeißSchwarzDBUpdater
             Log.Info(sets.Count + " Sets found.");
 
             // Define How much Task allowed at same Time
-            SemaphoreSlim maxThread = new SemaphoreSlim(3);
+            SemaphoreSlim maxThread = new SemaphoreSlim(1);
             List<Task> taskListToWait = new();
+
+            // Set to True if new Data are updated in DB
+            bool newData = false;
             // Load every Set into Task.
             for (int i = 0; i < sets.Count; i++)
             {
@@ -76,6 +88,7 @@ namespace WeißSchwarzDBUpdater
                         // End Task
                         return;
                     }
+                    newData = true;
                     // Start Collection
                     IterateEveryPage(window.driver, (int)index + 1);
                     window.driver.Close();
@@ -90,6 +103,13 @@ namespace WeißSchwarzDBUpdater
             Task.WaitAll(taskListToWait.ToArray());
             mainWebsite.driver.Close();
             mainWebsite.driver.Dispose();
+            // Update DataVersion in DB if new Data was Found
+            if(newData)
+            {
+                Program.db.DataVersion.FirstOrDefault(x => x.ID == 1).Version += 1;
+                Program.db.SaveChanges();
+                newData = false;
+            }            
             Program.db.Dispose();
             Console.WriteLine("Finished :D");
             Console.ReadKey();

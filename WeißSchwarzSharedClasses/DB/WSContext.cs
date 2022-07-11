@@ -17,6 +17,7 @@ namespace WeißSchwarzSharedClasses.DB
         public DbSet<Card> Cards { get; set; }
         public DbSet<Trigger> Trigger { get; set; }
         public DbSet<Trait> Traits { get; set; }
+        public DbSet<DataVersion> DataVersion { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -40,7 +41,7 @@ namespace WeißSchwarzSharedClasses.DB
                 .Property(x => x.Type)
                 .HasConversion(
                     v => v.ToString(),
-                    v => (CardType)Enum.Parse(typeof(WeißSchwarzSharedClasses.Models.CardType), v));
+                    v => (CardType)Enum.Parse(typeof(CardType), v));
 
             modelBuilder.Entity<Card>()
                 .Property(x => x.Color)

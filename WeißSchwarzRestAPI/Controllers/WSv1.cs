@@ -31,13 +31,41 @@ namespace WSRestAPI.Controllers
         /// <returns>String when working</returns>
         /// <response code="200">Returns a string</response>
 
-        [HttpGet]
+        [HttpGet(Name = "GetStatus")]
         [ProducesResponseType(typeof(string), 200)]
         [Produces("text/plain")]
         public IActionResult Get()
         {
             return Ok("WS Rest API is working! :)");
         }
+        #endregion
+
+        #region https://.../v1/ws/dataversion
+
+        /// <summary>
+        /// Get the current DataVersion.
+        /// It increase everytime new data is updated in DB.
+        /// </summary>
+        /// <returns>Current DataVersion</returns>
+        /// <response code="200">Returns a String</response>
+
+        [HttpGet("dataversion", Name = "GetDataVersion")]
+        [ProducesResponseType(typeof(string), 200)]
+        [Produces("text/plain")]
+        public IActionResult GetDataVersion()
+        {
+            string test = String.Empty;
+            try
+            {
+                test = db.DataVersion.FirstOrDefault(x => x.ID == 1).Version.ToString();
+            }
+            catch(Exception ex)
+            {
+                StatusCode(500, "Internal error occured:\n" + ex.Message + " Inner Exception:\n" + ex.InnerException);
+            }
+            return Ok(test);
+        }
+
         #endregion
 
         #region All Sets https://.../v1/ws/sets/all
@@ -48,7 +76,7 @@ namespace WSRestAPI.Controllers
         /// <returns>Collection of Sets</returns>
         /// <response code="200">Returns all Sets without Cards</response>
         /// <response code="500">Internal Error with Exception.Message and Exception.InnerMessage</response>
-        [HttpGet("sets")]
+        [HttpGet("sets", Name = "GetAllSets")]
         [Produces("application/json")]
         [ProducesResponseType(typeof(List<Set>), 200)]
         [ProducesResponseType(typeof(string), 500)]
@@ -71,7 +99,7 @@ namespace WSRestAPI.Controllers
         /// <returns>Collection of Sets</returns>
         /// <response code="200">Returns all Sets with Cards</response>
         /// <response code="500">Internal Error with Exception.Message and Exception.InnerMessage</response>
-        [HttpGet("sets/cards")]
+        [HttpGet("sets/cards", Name = "GetAllSetsWithCards")]
         [Produces("application/json")]
         [ProducesResponseType(typeof(List<Set>), 200)]
         [ProducesResponseType(typeof(string), 500)]
@@ -94,7 +122,7 @@ namespace WSRestAPI.Controllers
         /// <returns>Collection of Sets</returns>
         /// <response code="200">Returns all Sets with Cards and Traits of Cards</response>
         /// <response code="500">Internal Error with Exception.Message and Exception.InnerMessage</response>
-        [HttpGet("sets/cards/traits")]
+        [HttpGet("sets/cards/traits", Name = "GetAllSetsWithCardsAndTraits")]
         [Produces("application/json")]
         [ProducesResponseType(typeof(List<Set>), 200)]
         [ProducesResponseType(typeof(string), 500)]
@@ -117,7 +145,7 @@ namespace WSRestAPI.Controllers
         /// <returns>Collection of Sets</returns>
         /// <response code="200">Returns all Sets with Cards and Triggers of Cards</response>
         /// <response code="500">Internal Error with Exception.Message and Exception.InnerMessage</response>
-        [HttpGet("sets/cards/triggers")]
+        [HttpGet("sets/cards/triggers", Name = "GetAllSetsWithCardsAndTriggers")]
         [Produces("application/json")]
         [ProducesResponseType(typeof(List<Set>), 200)]
         [ProducesResponseType(typeof(string), 500)]
@@ -140,7 +168,7 @@ namespace WSRestAPI.Controllers
         /// <returns>Collection of Sets</returns>
         /// <response code="200">Returns all Sets with Cards, Traits and Triggers</response>
         /// <response code="500">Internal Error with Exception.Message and Exception.InnerMessage</response>
-        [HttpGet("sets/all")]
+        [HttpGet("sets/all", Name = "GetAllSetsWithAll")]
         [Produces("application/json")]
         [ProducesResponseType(typeof(List<Set>), 200)]
         [ProducesResponseType(typeof(string), 500)]
@@ -171,7 +199,7 @@ namespace WSRestAPI.Controllers
         /// <response code="400">BadRequest Input was Null or Empty</response>
         /// <response code="404">No Sets found in Database</response>
         /// <response code="500">Internal Error with Exception.Message and Exception.InnerMessage</response>
-        [HttpGet("sets/{setid}")]
+        [HttpGet("sets/{setid}", Name = "GetSetsBySetID")]
         [Produces("application/json")]
         [ProducesResponseType(typeof(List<Set>), 200)]
         [ProducesResponseType(typeof(string), 400)]
@@ -209,7 +237,7 @@ namespace WSRestAPI.Controllers
         /// <response code="400">BadRequest Input was Null or Empty</response>
         /// <response code="404">No Sets found in Database</response>
         /// <response code="500">Internal Error with Exception.Message and Exception.InnerMessage</response>
-        [HttpGet("sets/{setid}/cards")]
+        [HttpGet("sets/{setid}/cards", Name = "GetSetsBySetIDWithCards")]
         [Produces("application/json")]
         [ProducesResponseType(typeof(List<Set>), 200)]
         [ProducesResponseType(typeof(string), 400)]
@@ -247,7 +275,7 @@ namespace WSRestAPI.Controllers
         /// <response code="400">BadRequest Input was Null or Empty</response>
         /// <response code="404">No Sets found in Database</response>
         /// <response code="500">Internal Error with Exception.Message and Exception.InnerMessage</response>
-        [HttpGet("sets/{setid}/cards/traits")]
+        [HttpGet("sets/{setid}/cards/traits", Name = "GetSetsBySetIDWithCardsAndTraits")]
         [Produces("application/json")]
         [ProducesResponseType(typeof(List<Set>), 200)]
         [ProducesResponseType(typeof(string), 400)]
@@ -288,7 +316,7 @@ namespace WSRestAPI.Controllers
         /// <response code="400">BadRequest Input was Null or Empty</response>
         /// <response code="404">No Sets found in Database</response>
         /// <response code="500">Internal Error with Exception.Message and Exception.InnerMessage</response>
-        [HttpGet("sets/{setid}/cards/triggers")]
+        [HttpGet("sets/{setid}/cards/triggers", Name = "GetSetsBySetIDWithCardsAndTriggers")]
         [Produces("application/json")]
         [ProducesResponseType(typeof(List<Set>), 200)]
         [ProducesResponseType(typeof(string), 400)]
@@ -329,7 +357,7 @@ namespace WSRestAPI.Controllers
         /// <response code="400">BadRequest Input was Null or Empty</response>
         /// <response code="404">No Sets found in Database</response>
         /// <response code="500">Internal Error with Exception.Message and Exception.InnerMessage</response>
-        [HttpGet("sets/{setid}/all")]
+        [HttpGet("sets/{setid}/all", Name = "GetSetsBySetIDWithAll")]
         [Produces("application/json")]
         [ProducesResponseType(typeof(List<Set>), 200)]
         [ProducesResponseType(typeof(string), 400)]
@@ -375,7 +403,7 @@ namespace WSRestAPI.Controllers
         /// <response code="400">BadRequest Input was not a Integer</response>
         /// <response code="404">No Sets found in Database</response>
         /// <response code="500">Internal Error with Exception.Message and Exception.InnerMessage</response>
-        [HttpGet("set/{id}")]
+        [HttpGet("set/{id}", Name = "GetSetByID")]
         [Produces("application/json")]
         [ProducesResponseType(typeof(Set), 200)]
         [ProducesResponseType(typeof(string), 400)]
@@ -408,7 +436,7 @@ namespace WSRestAPI.Controllers
         /// <response code="400">BadRequest Input was not a Integer</response>
         /// <response code="404">No Sets found in Database</response>
         /// <response code="500">Internal Error with Exception.Message and Exception.InnerMessage</response>
-        [HttpGet("set/{id}/cards")]
+        [HttpGet("set/{id}/cards", Name = "GetSetByIDWithCards")]
         [Produces("application/json")]
         [ProducesResponseType(typeof(Set), 200)]
         [ProducesResponseType(typeof(string), 400)]
@@ -443,7 +471,7 @@ namespace WSRestAPI.Controllers
         /// <response code="400">BadRequest Input was not a Integer</response>
         /// <response code="404">No Sets found in Database</response>
         /// <response code="500">Internal Error with Exception.Message and Exception.InnerMessage</response>
-        [HttpGet("set/{id}/cards/traits")]
+        [HttpGet("set/{id}/cards/traits", Name = "GetSetByIDWithCardsAndTraits")]
         [Produces("application/json")]
         [ProducesResponseType(typeof(Set), 200)]
         [ProducesResponseType(typeof(string), 400)]
@@ -479,7 +507,7 @@ namespace WSRestAPI.Controllers
         /// <response code="400">BadRequest Input was not a Integer</response>
         /// <response code="404">No Sets found in Database</response>
         /// <response code="500">Internal Error with Exception.Message and Exception.InnerMessage</response>
-        [HttpGet("set/{id}/cards/triggers")]
+        [HttpGet("set/{id}/cards/triggers", Name = "GetSetByIDWithCardsAndTriggers")]
         [Produces("application/json")]
         [ProducesResponseType(typeof(Set), 200)]
         [ProducesResponseType(typeof(string), 400)]
@@ -515,7 +543,7 @@ namespace WSRestAPI.Controllers
         /// <response code="400">BadRequest Input was not a Integer</response>
         /// <response code="404">No Sets found in Database</response>
         /// <response code="500">Internal Error with Exception.Message and Exception.InnerMessage</response>
-        [HttpGet("set/{id}/all")]
+        [HttpGet("set/{id}/all", Name = "GetSetByIDWithAll")]
         [Produces("application/json")]
         [ProducesResponseType(typeof(Set), 200)]
         [ProducesResponseType(typeof(string), 400)]
@@ -554,7 +582,7 @@ namespace WSRestAPI.Controllers
         /// <returns>Collection of Sets</returns>
         /// <response code="200">Returns all Cards</response>
         /// <response code="500">Internal Error with Exception.Message and Exception.InnerMessage</response>
-        [HttpGet("cards")]
+        [HttpGet("cards", Name = "GetAllCards")]
         [Produces("application/json")]
         [ProducesResponseType(typeof(List<Card>), 200)]
         [ProducesResponseType(typeof(string), 500)]
@@ -577,7 +605,7 @@ namespace WSRestAPI.Controllers
         /// <returns>Collection of Sets</returns>
         /// <response code="200">Returns all Cards with Traits</response>
         /// <response code="500">Internal Error with Exception.Message and Exception.InnerMessage</response>
-        [HttpGet("cards/traits")]
+        [HttpGet("cards/traits", Name = "GetAllCardsWithTraits")]
         [Produces("application/json")]
         [ProducesResponseType(typeof(List<Card>), 200)]
         [ProducesResponseType(typeof(string), 500)]
@@ -600,7 +628,7 @@ namespace WSRestAPI.Controllers
         /// <returns>Collection of Sets</returns>
         /// <response code="200">Returns all Cards with Triggers</response>
         /// <response code="500">Internal Error with Exception.Message and Exception.InnerMessage</response>
-        [HttpGet("cards/triggers")]
+        [HttpGet("cards/triggers", Name = "GetAllCardsWithTriggers")]
         [Produces("application/json")]
         [ProducesResponseType(typeof(List<Card>), 200)]
         [ProducesResponseType(typeof(string), 500)]
@@ -625,7 +653,7 @@ namespace WSRestAPI.Controllers
         /// <returns>Collection of Sets</returns>
         /// <response code="200">Returns all Cards with Traits and Trigger</response>
         /// <response code="500">Internal Error with Exception.Message and Exception.InnerMessage</response>
-        [HttpGet("cards/all")]
+        [HttpGet("cards/all", Name = "GetAllCardsWithAll")]
         [Produces("application/json")]
         [ProducesResponseType(typeof(List<Card>), 200)]
         [ProducesResponseType(typeof(string), 500)]
@@ -647,7 +675,7 @@ namespace WSRestAPI.Controllers
 
         #endregion
 
-        #region https://.../v1/ws/card/{longid}/all
+        #region Card https://.../v1/ws/card/{longid}/all
 
         /// <summary>
         /// Returns a Card by LongID (Prefix/SetID-CardID)
@@ -661,7 +689,7 @@ namespace WSRestAPI.Controllers
         /// <response code="400">BadRequest Input was Null or Empty</response>
         /// <response code="404">No Sets found in Database</response>
         /// <response code="500">Internal Error with Exception.Message and Exception.InnerMessage</response>
-        [HttpGet("card/{prefix}/{setid}/{cardid}")]
+        [HttpGet("card/{prefix}/{setid}/{cardid}", Name = "GetCardByLongID")]
         [Produces("application/json")]
         [ProducesResponseType(typeof(Card), 200)]
         [ProducesResponseType(typeof(string), 400)]
@@ -704,7 +732,7 @@ namespace WSRestAPI.Controllers
         /// <response code="400">BadRequest Input was Null or Empty</response>
         /// <response code="404">No Sets found in Database</response>
         /// <response code="500">Internal Error with Exception.Message and Exception.InnerMessage</response>
-        [HttpGet("card/{prefix}/{setid}/{cardid}/traits")]
+        [HttpGet("card/{prefix}/{setid}/{cardid}/traits", Name = "GetCardByLongIDWithTraits")]
         [Produces("application/json")]
         [ProducesResponseType(typeof(Card), 200)]
         [ProducesResponseType(typeof(string), 400)]
@@ -747,7 +775,7 @@ namespace WSRestAPI.Controllers
         /// <response code="400">BadRequest Input was Null or Empty</response>
         /// <response code="404">No Sets found in Database</response>
         /// <response code="500">Internal Error with Exception.Message and Exception.InnerMessage</response>
-        [HttpGet("card/{prefix}/{setid}/{cardid}/triggers")]
+        [HttpGet("card/{prefix}/{setid}/{cardid}/triggers", Name = "GetCardByLongIDWithTriggers")]
         [Produces("application/json")]
         [ProducesResponseType(typeof(Card), 200)]
         [ProducesResponseType(typeof(string), 400)]
@@ -790,7 +818,7 @@ namespace WSRestAPI.Controllers
         /// <response code="400">BadRequest Input was Null or Empty</response>
         /// <response code="404">No Sets found in Database</response>
         /// <response code="500">Internal Error with Exception.Message and Exception.InnerMessage</response>
-        [HttpGet("card/{prefix}/{setid}/{cardid}/all")]
+        [HttpGet("card/{prefix}/{setid}/{cardid}/all", Name = "GetCardByLongIDWithAll")]
         [Produces("application/json")]
         [ProducesResponseType(typeof(Card), 200)]
         [ProducesResponseType(typeof(string), 400)]

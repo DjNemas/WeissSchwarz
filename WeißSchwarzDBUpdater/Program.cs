@@ -18,7 +18,7 @@ namespace WeißSchwarzDBUpdater
             {
                 Log.Debug("DB Connected");
                 // Start Collect
-                collector = new(Path.GetFullPath("../../../chromedriver", Environment.CurrentDirectory), true);
+                collector = new("chromedriver", true);
                 collector.StartCollect();
             }            
             Console.ReadKey();
