@@ -32,7 +32,7 @@ namespace WeißSchwarzViewer
     /// </summary>
     public partial class MainWindow : Window
     {
-        private readonly float _AppVersion = 1.0f;
+        private readonly float _AppVersion = 1.1f;
 #if DEBUG
         [DllImport("Kernel32")]
         private static extern void AllocConsole();
@@ -168,9 +168,9 @@ namespace WeißSchwarzViewer
         private async Task UpdateSets()
         {
             btnUpdate.IsEnabled = false;
-            lblProcess.Content = "Updateing... 0%";
+            lblProcess.Content = "Updating... 0%";
             lblProcess.Foreground = Brushes.DarkCyan;
-            lblVersion.Content = "Updateing...";
+            lblVersion.Content = "Updating...";
             lblVersion.Foreground = Brushes.DarkCyan;
 
             DatabaseContext db = new();
@@ -195,7 +195,7 @@ namespace WeißSchwarzViewer
                 foreach (var set in sets)
                 {
                     processBar.Value = (int)(100 / (float)sets.Count() * count++);
-                    lblProcess.Content = "Updateting..." + processBar.Value + "%";
+                    lblProcess.Content = "Updating..." + processBar.Value + "%";
                     await Task.Delay(TimeSpan.FromMilliseconds(10));
                     Set? setDB = await db.Sets.FirstOrDefaultAsync(x => x.ID == set.ID);
                     if (setDB == null)
@@ -486,42 +486,51 @@ namespace WeißSchwarzViewer
                 // Start Iterate trough all cards
                 foreach (Set set in copyList)
                 {
-                    string setFolderPath = System.IO.Path.Combine(folderDir, set.Name + " - " + Enum.GetName(set.Type));
-                    if (!Directory.Exists(setFolderPath))
-                        Directory.CreateDirectory(setFolderPath);
-
-                    foreach (Card card in set.Cards)
+                    try
                     {
-                        if (stopDownloadingImages)
-                        {
-                            btnStop.IsEnabled = false;
-                            lblProcess.Content = "Stopped";
-                            lblProcess.Foreground = Brushes.Black;
-                            processBar.Value = 0;
-                            return;
-                        }
+                        string setFolderPath = System.IO.Path.Combine(folderDir, FixInvalidCharsInFile(set.Name) + " - " + Enum.GetName(set.Type));
+                        setFolderPath = FixInvalidCharsInPath(setFolderPath);
+                        if (!Directory.Exists(setFolderPath))
+                            Directory.CreateDirectory(setFolderPath);
 
-                        processBar.Value = (int)(100f / countCards * count++);
-                        lblProcess.Content = "Downloading Set Images..." + processBar.Value + "%";
+                        foreach (Card card in set.Cards)
+                        {
+                            if (stopDownloadingImages)
+                            {
+                                btnStop.IsEnabled = false;
+                                lblProcess.Content = "Stopped";
+                                lblProcess.Foreground = Brushes.Black;
+                                processBar.Value = 0;
+                                return;
+                            }
 
-                        string cardFileName = card.LongID.Replace("/", "_").Replace("-", "_") + ".jpg";
-                        
-                            
-                        try
-                        {
-                            byte[] data = await _httpClient.GetByteArrayAsync(card.ImageURL);
-                            await File.WriteAllBytesAsync(System.IO.Path.Combine(setFolderPath, cardFileName), data);
-                        }
-                        catch(Exception e)
-                        {
-                            MessageBox.Show("Some error occured while downloading Images.\n" + e);
-                            lblProcess.Content = "Failed :c";
-                            lblProcess.Foreground = Brushes.Red;
-                            processBar.Value = 0;
-                            btnStop.IsEnabled = false;
-                            return;
+                            processBar.Value = (int)(100f / countCards * count++);
+                            lblProcess.Content = "Downloading Set Images..." + processBar.Value + "%";
+
+                            string cardFileName = card.LongID.Replace("/", "_").Replace("-", "_") + ".jpg";
+                            cardFileName = FixInvalidCharsInFile(cardFileName);
+
+                            try
+                            {
+                                byte[] data = await _httpClient.GetByteArrayAsync(card.ImageURL);
+                                await File.WriteAllBytesAsync(System.IO.Path.Combine(setFolderPath, cardFileName), data);
+                            }
+                            catch (Exception e)
+                            {
+                                MessageBox.Show("Some error occured while downloading Images.\n" + e);
+                                lblProcess.Content = "Failed :c";
+                                lblProcess.Foreground = Brushes.Red;
+                                processBar.Value = 0;
+                                btnStop.IsEnabled = false;
+                                return;
+                            }
                         }
                     }
+                    catch (Exception ex)
+                    {
+                        Log.Debug("Error: " + ex);
+                    }
+                    
                 }
                 lblProcess.Content = "Done";
                 lblProcess.Foreground = Brushes.Black;
@@ -529,6 +538,26 @@ namespace WeißSchwarzViewer
                 btnDowload.IsEnabled = true;
                 btnStop.IsEnabled = false;
             });
+        }
+
+        private string FixInvalidCharsInPath(string str)
+        {
+            string fixedString = str;
+            foreach(char c in System.IO.Path.GetInvalidPathChars())
+            {
+                fixedString = fixedString.Replace(c, ' ');
+            }
+            return fixedString;
+        }
+
+        private string FixInvalidCharsInFile(string str)
+        {
+            string fixedString = str;
+            foreach (char c in System.IO.Path.GetInvalidFileNameChars())
+            {
+                fixedString = fixedString.Replace(c, ' ');
+            }
+            return fixedString;
         }
 
         private void btnAll_Click(object sender, RoutedEventArgs e)
