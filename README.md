@@ -3,7 +3,7 @@
 #Rest API documentation can be found here:
 [Weiß Schwarz Rest API with Images Links!](https://djnemashome.de/WSRestAPI/)
 
-# Weiß Schwarz Viewer with Image Downloader V1.0
+# Weiß Schwarz Viewer with Image Downloader V1.1
 [Weiß Schwarz Viewer](https://github.com/DjNemas/WeissSchwarz/releases)
 
 Have fun with it. :)
