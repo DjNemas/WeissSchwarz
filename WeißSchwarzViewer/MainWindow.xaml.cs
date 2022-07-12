@@ -68,7 +68,6 @@ namespace WeißSchwarzViewer
 
             // Check for Updates at Start
             CheckForUpdate();
-
         }
 
         private void CreateDatabaseIfNotExist()
@@ -469,16 +468,23 @@ namespace WeißSchwarzViewer
                 lblProcess.Content = "Downloading... 0%";
                 lblProcess.Foreground = Brushes.DarkCyan;
 
-                var list = lbSets.SelectedItems;
+                // Copy Card in new List
+                List<Set> copyList = new();
+                foreach (Set set in lbSets.SelectedItems)
+                {
+                    copyList.Add(set);
+                }
                 float count = 1;
                 float countCards = 0;
                 string folderDir = tbDirectory.Text;
 
-                foreach (Set set in list)
+                // Calculate Count for Progressbar
+                foreach (Set set in copyList)
                 {
                     countCards += set.Cards.Count();
                 }
-                foreach (Set set in list)
+                // Start Iterate trough all cards
+                foreach (Set set in copyList)
                 {
                     string setFolderPath = System.IO.Path.Combine(folderDir, set.Name + " - " + Enum.GetName(set.Type));
                     if (!Directory.Exists(setFolderPath))
@@ -496,9 +502,11 @@ namespace WeißSchwarzViewer
                         }
 
                         processBar.Value = (int)(100f / countCards * count++);
-                        lblProcess.Content = "Downloading..." + processBar.Value + "%";
+                        lblProcess.Content = "Downloading Set Images..." + processBar.Value + "%";
 
                         string cardFileName = card.LongID.Replace("/", "_").Replace("-", "_") + ".jpg";
+                        
+                            
                         try
                         {
                             byte[] data = await _httpClient.GetByteArrayAsync(card.ImageURL);
