@@ -9,7 +9,7 @@ namespace WeißSchwarzViewer.UI
     internal enum ComboBoxEnumSort
     {
         Id,
-        Title,
+        Name,
         Rarity,
         Color,
         Type,

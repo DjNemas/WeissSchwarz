@@ -6,9 +6,8 @@
         xmlns:helper="clr-namespace:WeißSchwarzViewer.WPFHelper"
         xmlns:local="clr-namespace:WeißSchwarzViewer"
         mc:Ignorable="d"
-        Title="Weiß Schwarz Set Viewer" Height="800" Width="1250">
+        Title="Weiß Schwarz Set Viewer © by Nemas#0185 (Discord)"  Width="1650" Height="1000">
     <Grid>
-
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition/>
@@ -44,15 +43,27 @@
             <Grid Grid.Column="0">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
                     <RowDefinition/>
                 </Grid.RowDefinitions>
                 <Label Grid.Row="0" Content="Sets" HorizontalContentAlignment="Center"/>
-                <ListBox Grid.Row="1" Name="lbReleases" Margin="5 0 0 0" SelectionChanged="lbSets_SelectionChanged">
+                <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Center" Margin="2">                    
+                    <Label Content="Download Images:"/>
+                    <Button x:Name="btnMultiple" Content="Multiple" Margin="2" Padding="5 0" Click="btnMultiple_Click"/>
+                    <Button x:Name="btnAll" Content="All" Margin="2" Padding="5 0" Click="btnAll_Click" IsEnabled="False"/>
+                    <Label Content="Dir Path:"/>
+                    <TextBlock x:Name="tbDirectory" ToolTip="{Binding Text, ElementName=tbDirectory}" Width="125" Margin="2" Padding="2 0" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                    <Button x:Name="btnDPath" Width="20" Content="..." Margin="2" Padding="5 0" Click="btnDPath_Click"/>
+                    <Button x:Name="btnDowload" Content="Download" Margin="2" Padding="5 0" Click="btnDowload_Click"/>
+                    <Button x:Name="btnStop" Content="Stop" Margin="2" Padding="5 0" Click="Stop_Click" IsEnabled="False"/>
+                </StackPanel>
+                <ListBox Grid.Row="2" Name="lbSets" Margin="5 0 0 0" SelectionChanged="lbSets_SelectionChanged">
                     <ListBox.ItemTemplate>
                         <DataTemplate>
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Width="300" Text="{Binding Name}" TextWrapping="Wrap"/>
-                                <TextBlock Text="{Binding NumberOfCards, StringFormat={}Cards: {0}}"/>
+                            <StackPanel Margin="0 0 0 5">
+                                <TextBlock Grid.Column="1" Width="300" Text="{Binding Name, StringFormat=Name: {0}}" TextWrapping="Wrap"/>
+                                <TextBlock Grid.Column="0" Text="{Binding Type, StringFormat=SetType: {0}}" Margin="0 0 10 0"/>
+                                <TextBlock Grid.Column="1" Text="{Binding NumberOfCards, StringFormat=Cards: {0}}"/>
                             </StackPanel>
                         </DataTemplate>
                     </ListBox.ItemTemplate>
@@ -63,15 +74,15 @@
             <Grid Grid.Column="1">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
                     <RowDefinition/>
                 </Grid.RowDefinitions>
 
-
-                <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Center">
-                    <Label Content="Cards" HorizontalContentAlignment="Center"/>
+                <Label Grid.Row="0" Content="Cards" HorizontalContentAlignment="Center"/>
+                <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Center" Margin="2">                    
                     <Label Content="Sort:"/>
-                    <ComboBox Name="cbSorter" SelectionChanged="cbSorter_SelectionChanged" SelectedIndex="0"/>
-                    <ComboBox Name="cbSorterAorD" SelectionChanged="cbSorterAorD_SelectionChanged" SelectedIndex="0"/>
+                    <ComboBox Name="cbSorter" SelectionChanged="cbSorter_SelectionChanged" SelectedIndex="0" IsEnabled="False" Margin="0 2 2 2"/>
+                    <ComboBox Name="cbSorterAorD" SelectionChanged="cbSorterAorD_SelectionChanged" SelectedIndex="0" IsEnabled="False" Margin="0 2 0 2"/>
                 </StackPanel>
                 <ListBox Grid.Row="2" Name="lbCards" Margin="5 0 0 0" SelectionChanged="lbCards_SelectionChanged">
                     <ListBox.Resources>
@@ -81,7 +92,7 @@
                         <DataTemplate>
                             <StackPanel x:Name="spCards" Margin="0 0 0 10">
                                 <TextBlock Text="{Binding LongID, StringFormat={}ID: {0}}"/>
-                                <TextBlock Text="{Binding Name, StringFormat={}Title: {0}}"/>
+                                <TextBlock Text="{Binding Name, StringFormat={}Name: {0}}"/>
                                 <TextBlock Text="{Binding Rarity, StringFormat={}Rarity: {0}}"/>
                                 <TextBlock Text="{Binding Color, StringFormat={}Color: {0}}"/>
                                 <TextBlock Text="{Binding Type, StringFormat={}Type: {0}}"/>

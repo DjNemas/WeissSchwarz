@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -22,6 +23,7 @@ using WeißSchwarzSharedClasses.Models;
 using WeißSchwarzViewer.DB;
 using WeißSchwarzViewer.UI;
 using static WeißSchwarzViewer.DB.DatabaseContext;
+using Microsoft.WindowsAPICodePack.Dialogs;
 
 namespace WeißSchwarzViewer
 {
@@ -36,6 +38,8 @@ namespace WeißSchwarzViewer
         private static extern void AllocConsole();
 #endif
         private HttpClient _httpClient;
+
+        private bool stopDownloadingImages = false;
 
         public MainWindow()
         {
@@ -101,7 +105,7 @@ namespace WeißSchwarzViewer
         }
         private void SetUIWithObs()
         {
-            lbReleases.ItemsSource = ObsLists.Sets;
+            lbSets.ItemsSource = ObsLists.Sets;
             lbCards.ItemsSource = ObsLists.Cards;
             cbSorter.ItemsSource = Enum.GetValues(typeof(ComboBoxEnumSort));
             cbSorterAorD.ItemsSource = Enum.GetValues(typeof(ComboBoxEnumSortAorDescending));
@@ -248,18 +252,35 @@ namespace WeißSchwarzViewer
 
         private void DisableUI()
         {
-            lbReleases.IsEnabled = false;
+            lbSets.IsEnabled = false;
         }
 
         private void EnableUI()
         {
-            lbReleases.IsEnabled = true;
+            lbSets.IsEnabled = true;
         }
 
         private void lbSets_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            Set? set = lbReleases.SelectedItem as Set;
-            UpdateCardsItemBox(set.Cards);
+            if (lbSets.SelectedItems.Count <= 1)
+            {
+                Set? set = lbSets.SelectedItem as Set;
+                if (set != null && lbSets.SelectionMode == SelectionMode.Single)
+                {
+                    cbSorter.SelectedIndex = 0;
+                    cbSorter.IsEnabled = true;
+                    cbSorterAorD.SelectedIndex = 0;
+                    cbSorterAorD.IsEnabled = true;
+                    UpdateCardsItemBox(set.Cards);
+                }
+            }
+            else
+            {
+                cbSorter.IsEnabled = false;
+                cbSorterAorD.IsEnabled = false;
+                ObsLists.Cards.Clear();
+            }
+                
         }
 
         private void UpdateCardsItemBox(List<Card> cardsList)
@@ -273,19 +294,106 @@ namespace WeißSchwarzViewer
 
         private void cbSorter_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-
+            SortCards();
         }
 
         private void cbSorterAorD_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
+            SortCards();
+        }
 
+        private void SortCards()
+        {
+            if (cbSorterAorD.SelectedItem == null || cbSorter.SelectedItem == null)
+                return;
+
+            var sorterac = Enum.GetName(typeof(ComboBoxEnumSortAorDescending), cbSorterAorD.SelectedItem);
+            var sorter = Enum.GetName(typeof(ComboBoxEnumSort), cbSorter.SelectedItem);
+
+            List<Card> cardsList = null;
+
+            switch (sorter)
+            {
+                case "Id":
+                    {
+                        if (sorterac == "Ascending")
+                            cardsList = ObsLists.Cards.OrderBy(x => x.LongID).ToList();
+                        else if ((sorterac == "Descending"))
+                            cardsList = ObsLists.Cards.OrderByDescending(x => x.LongID).ToList();
+                        break;
+                    }
+                case "Name":
+                    {
+                        if (sorterac == "Ascending")
+                            cardsList = ObsLists.Cards.OrderBy(x => x.Name).ToList();
+                        else if ((sorterac == "Descending"))
+                            cardsList = ObsLists.Cards.OrderByDescending(x => x.Name).ToList();
+                        break;
+                    }
+                case "Rarity":
+                    {
+                        if (sorterac == "Ascending")
+                            cardsList = ObsLists.Cards.OrderBy(x => x.Rarity).ToList();
+                        else if ((sorterac == "Descending"))
+                            cardsList = ObsLists.Cards.OrderByDescending(x => x.Rarity).ToList();
+                        break;
+                    }
+                case "Color":
+                    {
+                        if (sorterac == "Ascending")
+                            cardsList = ObsLists.Cards.OrderBy(x => x.Color).ToList();
+                        else if ((sorterac == "Descending"))
+                            cardsList = ObsLists.Cards.OrderByDescending(x => x.Color).ToList();
+                        break;
+                    }
+                case "Type":
+                    {
+                        if (sorterac == "Ascending")
+                            cardsList = ObsLists.Cards.OrderBy(x => x.Type).ToList();
+                        else if ((sorterac == "Descending"))
+                            cardsList = ObsLists.Cards.OrderByDescending(x => x.Type).ToList();
+                        break;
+                    }
+                case "Level":
+                    {
+                        if (sorterac == "Ascending")
+                            cardsList = ObsLists.Cards.OrderBy(x => x.Level).ToList();
+                        else if ((sorterac == "Descending"))
+                            cardsList = ObsLists.Cards.OrderByDescending(x => x.Level).ToList();
+                        break;
+                    }
+                case "Cost":
+                    {
+                        if (sorterac == "Ascending")
+                            cardsList = ObsLists.Cards.OrderBy(x => x.Cost).ToList();
+                        else if ((sorterac == "Descending"))
+                            cardsList = ObsLists.Cards.OrderByDescending(x => x.Cost).ToList();
+                        break;
+                    }
+                case "Power":
+                    {
+                        if (sorterac == "Ascending")
+                            cardsList = ObsLists.Cards.OrderBy(x => x.Power).ToList();
+                        else if ((sorterac == "Descending"))
+                            cardsList = ObsLists.Cards.OrderByDescending(x => x.Power).ToList();
+                        break;
+                    }
+                case "Soul":
+                    {
+                        if (sorterac == "Ascending")
+                            cardsList = ObsLists.Cards.OrderBy(x => x.Soul).ToList();
+                        else if ((sorterac == "Descending"))
+                            cardsList = ObsLists.Cards.OrderByDescending(x => x.Soul).ToList();
+                        break;
+                    }
+            }
+            UpdateCardsItemBox(cardsList);
         }
 
         private void lbCards_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (lbCards.SelectedItem == null)
-                return;
-            
+                return; 
             Application.Current.Dispatcher.Invoke(() =>
             {
                 Card card = lbCards.SelectedItem as Card;
@@ -311,6 +419,118 @@ namespace WeißSchwarzViewer
                     processBar.Value = 0;
                 }
             });
+        }
+
+        private void btnMultiple_Click(object sender, RoutedEventArgs e)
+        {
+            if (lbSets.SelectionMode == SelectionMode.Single)
+            {
+                ObsLists.Cards.Clear();
+                btnMultiple.Background = Brushes.LightGreen;
+                lbSets.SelectionMode = SelectionMode.Multiple;
+                btnAll.IsEnabled = true;
+            }
+            else if (lbSets.SelectionMode == SelectionMode.Multiple)
+            {
+                btnMultiple.Background = new SolidColorBrush(System.Windows.Media.Color.FromArgb(255, 221, 221, 221));
+                lbSets.SelectionMode = SelectionMode.Single;
+                btnAll.IsEnabled = false;
+            }
+
+        }
+
+        private void btnDPath_Click(object sender, RoutedEventArgs e)
+        {
+            CommonOpenFileDialog dialog = new CommonOpenFileDialog();
+            dialog.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+            dialog.IsFolderPicker = true;
+            if (dialog.ShowDialog() == CommonFileDialogResult.Ok)
+                tbDirectory.Text = dialog.FileName;
+        }
+
+        private void btnDowload_Click(object sender, RoutedEventArgs e)
+        {
+            if (string.IsNullOrEmpty(tbDirectory.Text))
+            {
+                MessageBox.Show("Please select a folder first.");
+                return;
+            }
+            if (lbSets.SelectedItems.Count < 1)
+            {
+                MessageBox.Show("Please select minimum one Set.");
+                return;
+            }
+
+            Application.Current.Dispatcher.InvokeAsync(async () =>
+            {
+                stopDownloadingImages = false;
+                btnDowload.IsEnabled = false;
+                btnStop.IsEnabled = true;
+                lblProcess.Content = "Downloading... 0%";
+                lblProcess.Foreground = Brushes.DarkCyan;
+
+                var list = lbSets.SelectedItems;
+                float count = 1;
+                float countCards = 0;
+                string folderDir = tbDirectory.Text;
+
+                foreach (Set set in list)
+                {
+                    countCards += set.Cards.Count();
+                }
+                foreach (Set set in list)
+                {
+                    string setFolderPath = System.IO.Path.Combine(folderDir, set.Name + " - " + Enum.GetName(set.Type));
+                    if (!Directory.Exists(setFolderPath))
+                        Directory.CreateDirectory(setFolderPath);
+
+                    foreach (Card card in set.Cards)
+                    {
+                        if (stopDownloadingImages)
+                        {
+                            btnStop.IsEnabled = false;
+                            lblProcess.Content = "Stopped";
+                            lblProcess.Foreground = Brushes.Black;
+                            processBar.Value = 0;
+                            return;
+                        }
+
+                        processBar.Value = (int)(100f / countCards * count++);
+                        lblProcess.Content = "Downloading..." + processBar.Value + "%";
+
+                        string cardFileName = card.LongID.Replace("/", "_").Replace("-", "_") + ".jpg";
+                        try
+                        {
+                            byte[] data = await _httpClient.GetByteArrayAsync(card.ImageURL);
+                            await File.WriteAllBytesAsync(System.IO.Path.Combine(setFolderPath, cardFileName), data);
+                        }
+                        catch(Exception e)
+                        {
+                            MessageBox.Show("Some error occured while downloading Images.\n" + e);
+                            lblProcess.Content = "Failed :c";
+                            lblProcess.Foreground = Brushes.Red;
+                            processBar.Value = 0;
+                            btnStop.IsEnabled = false;
+                            return;
+                        }
+                    }
+                }
+                lblProcess.Content = "Done";
+                lblProcess.Foreground = Brushes.Black;
+                processBar.Value = 0;
+                btnDowload.IsEnabled = true;
+                btnStop.IsEnabled = false;
+            });
+        }
+
+        private void btnAll_Click(object sender, RoutedEventArgs e)
+        {
+            lbSets.SelectAll();
+        }
+
+        private void Stop_Click(object sender, RoutedEventArgs e)
+        {
+            stopDownloadingImages = true;
         }
     }
 }
