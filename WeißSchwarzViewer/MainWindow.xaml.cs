@@ -69,6 +69,7 @@ namespace WeißSchwarzViewer
 
             // Check for Updates at Start
             CheckForUpdate();
+
         }
 
         private void CreateDatabaseIfNotExist()
