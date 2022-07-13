@@ -24,6 +24,7 @@ using WeißSchwarzViewer.DB;
 using WeißSchwarzViewer.UI;
 using static WeißSchwarzViewer.DB.DatabaseContext;
 using Microsoft.WindowsAPICodePack.Dialogs;
+using WeißSchwarzViewer.WPFHelper;
 
 namespace WeißSchwarzViewer
 {
@@ -397,13 +398,25 @@ namespace WeißSchwarzViewer
             {
                 Card card = lbCards.SelectedItem as Card;
                 BitmapImage bmImage = new();
-                bmImage.BeginInit();
                 bmImage.DownloadProgress += BmImage_DownloadProgress;
+                bmImage.DownloadFailed += BmImage_DecodeFailed;
+                bmImage.DecodeFailed += BmImage_DecodeFailed;
+
+                bmImage.BeginInit();
                 bmImage.UriSource = new Uri(card.ImageURL);
                 bmImage.EndInit();
                 imgCardImage.Source = bmImage;
+                tbCardImage.Visibility = Visibility.Hidden;
+                imgCardImage.Visibility = Visibility.Visible;                
             });
             
+        }
+
+        private void BmImage_DecodeFailed(object? sender, ExceptionEventArgs e)
+        {
+            tbCardImage.Text = "Could not load Image :c";
+            imgCardImage.Visibility = Visibility.Hidden;
+            tbCardImage.Visibility = Visibility.Visible;
         }
 
         private void BmImage_DownloadProgress(object? sender, DownloadProgressEventArgs e)
@@ -486,8 +499,10 @@ namespace WeißSchwarzViewer
                 // Start Iterate trough all cards
                 foreach (Set set in copyList)
                 {
+#if DEBUG
                     try
                     {
+#endif
                         string setFolderPath = System.IO.Path.Combine(folderDir, FixInvalidCharsInFile(set.Name) + " - " + Enum.GetName(set.Type));
                         setFolderPath = FixInvalidCharsInPath(setFolderPath);
                         if (!Directory.Exists(setFolderPath))
@@ -498,6 +513,7 @@ namespace WeißSchwarzViewer
                             if (stopDownloadingImages)
                             {
                                 btnStop.IsEnabled = false;
+                                btnDowload.IsEnabled = true;
                                 lblProcess.Content = "Stopped";
                                 lblProcess.Foreground = Brushes.Black;
                                 processBar.Value = 0;
@@ -510,27 +526,44 @@ namespace WeißSchwarzViewer
                             string cardFileName = card.LongID.Replace("/", "_").Replace("-", "_") + ".jpg";
                             cardFileName = FixInvalidCharsInFile(cardFileName);
 
-                            try
+                            // Reloop 5x when Exception is thrown
+                            bool passed = false;
+                            int attempt = 1;
+                            do
                             {
-                                byte[] data = await _httpClient.GetByteArrayAsync(card.ImageURL);
-                                await File.WriteAllBytesAsync(System.IO.Path.Combine(setFolderPath, cardFileName), data);
-                            }
-                            catch (Exception e)
-                            {
-                                MessageBox.Show("Some error occured while downloading Images.\n" + e);
-                                lblProcess.Content = "Failed :c";
-                                lblProcess.Foreground = Brushes.Red;
-                                processBar.Value = 0;
-                                btnStop.IsEnabled = false;
-                                return;
-                            }
+                                try
+                                {
+                                    byte[] data = await _httpClient.GetByteArrayAsync(card.ImageURL);
+                                    await File.WriteAllBytesAsync(System.IO.Path.Combine(setFolderPath, cardFileName), data);
+                                    passed = true;
+                                }
+                                catch (Exception e)
+                                {
+                                    Log.Debug($"Card Download Failed. Attempt: {attempt}. Retry...");
+                                    if (attempt == 5)
+                                    {
+                                        string message = $"Some error occured while downloading for Card.\n" +
+                                            $"ID: {card.LongID}\n" +
+                                            $"Name: {card.Name}\n" +
+                                            $"From Set {set.Name} - {Enum.GetName(set.Type)}\n";
+                                        string logMessage = $"\nFail log.txt can be found in Download Folder";
+
+                                        File.AppendAllText(System.IO.Path.Combine(folderDir, "log.txt"), message);
+
+                                        MessageBox.Show("[" + DateTime.Now + "] " + message + logMessage + "\n\n" + e);
+                                        break;
+                                    }
+                                    attempt++;
+                                }
+                            } while (!passed);
                         }
+#if DEBUG
                     }
                     catch (Exception ex)
                     {
                         Log.Debug("Error: " + ex);
                     }
-                    
+#endif
                 }
                 lblProcess.Content = "Done";
                 lblProcess.Foreground = Brushes.Black;

@@ -23,7 +23,7 @@ namespace WeißSchwarzSharedClasses.Models
 
         [NotMapped]
         [JsonIgnore]
-        public int NumberOfCards { get => Cards.Count(); }
+        public int NumberOfCards { get => Cards.Count(); set { } }
 
     }
 

@@ -18,7 +18,7 @@ namespace WeißSchwarzSharedClasses.Models
         public TriggerType TriggerType { get; set; }
         [JsonIgnore]
         [NotMapped]
-        public string TriggerTypeUI { get => Enum.GetName(TriggerType); }
+        public string TriggerTypeUI { get => Enum.GetName(TriggerType); set { } }
     }
 
     public enum TriggerType
