@@ -33,7 +33,7 @@ namespace WeißSchwarzViewer
     /// </summary>
     public partial class MainWindow : Window
     {
-        private readonly float _AppVersion = 1.1f;
+        private readonly float _AppVersion = 1.2f;
 #if DEBUG
         [DllImport("Kernel32")]
         private static extern void AllocConsole();
