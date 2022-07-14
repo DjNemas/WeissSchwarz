@@ -445,7 +445,6 @@ namespace WeißSchwarzViewer
                 btnMultiple.Background = Brushes.LightGreen;
                 lbSets.SelectionMode = SelectionMode.Multiple;
                 btnAll.IsEnabled = true;
-                MessageBox.Show("Please click on multiple mode on right side of each element to select them.\nWPF is pain sometimes to code <.<");
             }
             else if (lbSets.SelectionMode == SelectionMode.Multiple)
             {

@@ -101,9 +101,9 @@
                     <ListBox.ItemTemplate>
                         <DataTemplate>
                             <StackPanel Margin="0 0 0 5">
-                                <TextBox Grid.Column="1" Width="300" Text="{Binding Name, StringFormat=Name: {0}}" TextWrapping="Wrap" Style="{DynamicResource lbDesign}"/>
-                                <TextBox Grid.Column="0" Text="{Binding Type, StringFormat=SetType: {0}}" Margin="0 0 10 0" Style="{DynamicResource lbDesign}"/>
-                                <TextBox Grid.Column="1" Text="{Binding NumberOfCards, StringFormat=Cards: {0}}" Style="{DynamicResource lbDesign}"/>
+                                <TextBlock Grid.Column="1" Width="300" Text="{Binding Name, StringFormat=Name: {0}}" TextWrapping="Wrap"/>
+                                <TextBlock Grid.Column="0" Text="{Binding Type, StringFormat=SetType: {0}}" Margin="0 0 10 0"/>
+                                <TextBlock Grid.Column="1" Text="{Binding NumberOfCards, StringFormat=Cards: {0}}"/>
                             </StackPanel>
                         </DataTemplate>
                     </ListBox.ItemTemplate>
