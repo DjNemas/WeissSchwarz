@@ -25,6 +25,7 @@ using WeißSchwarzViewer.UI;
 using static WeißSchwarzViewer.DB.DatabaseContext;
 using Microsoft.WindowsAPICodePack.Dialogs;
 using WeißSchwarzViewer.WPFHelper;
+using System.Text.RegularExpressions;
 
 namespace WeißSchwarzViewer
 {
@@ -33,7 +34,7 @@ namespace WeißSchwarzViewer
     /// </summary>
     public partial class MainWindow : Window
     {
-        private readonly float _AppVersion = 1.2f;
+        private readonly float _AppVersion = 1.3f;
 #if DEBUG
         [DllImport("Kernel32")]
         private static extern void AllocConsole();
@@ -41,6 +42,8 @@ namespace WeißSchwarzViewer
         private HttpClient _httpClient;
 
         private bool stopDownloadingImages = false;
+
+        private static object locker = new();
 
         public MainWindow()
         {
@@ -442,6 +445,7 @@ namespace WeißSchwarzViewer
                 btnMultiple.Background = Brushes.LightGreen;
                 lbSets.SelectionMode = SelectionMode.Multiple;
                 btnAll.IsEnabled = true;
+                MessageBox.Show("Please click on multiple mode on right side of each element to select them.\nWPF is pain sometimes to code <.<");
             }
             else if (lbSets.SelectionMode == SelectionMode.Multiple)
             {
@@ -461,7 +465,7 @@ namespace WeißSchwarzViewer
                 tbDirectory.Text = dialog.FileName;
         }
 
-        private void btnDowload_Click(object sender, RoutedEventArgs e)
+        private async void btnDowload_Click(object sender, RoutedEventArgs e)
         {
             if (string.IsNullOrEmpty(tbDirectory.Text))
             {
@@ -474,104 +478,116 @@ namespace WeißSchwarzViewer
                 return;
             }
 
-            Application.Current.Dispatcher.InvokeAsync(async () =>
+            Application.Current.Dispatcher.Invoke(() =>
             {
                 stopDownloadingImages = false;
                 btnDowload.IsEnabled = false;
                 btnStop.IsEnabled = true;
                 lblProcess.Content = "Downloading... 0%";
                 lblProcess.Foreground = Brushes.DarkCyan;
+            });
 
-                // Copy Card in new List
-                List<Set> copyList = new();
-                foreach (Set set in lbSets.SelectedItems)
-                {
-                    copyList.Add(set);
-                }
-                float count = 1;
-                float countCards = 0;
-                string folderDir = tbDirectory.Text;
+            // Copy Card in new List
+            List<Set> copyList = new();
+            foreach (Set set in lbSets.SelectedItems)
+            {
+                copyList.Add(set);
+            }
+            float count = 1;
+            float countCards = 0;
+            string folderDir = tbDirectory.Text;
 
-                // Calculate Count for Progressbar
-                foreach (Set set in copyList)
+            // Calculate Count for Progressbar
+            foreach (Set set in copyList)
+            {
+                countCards += set.Cards.Count();
+            }
+            // Start Iterate trough all cards
+            foreach (Set set in copyList)
+            {
+                string setFolderPath = System.IO.Path.Combine(folderDir, FixInvalidCharsInFile(set.Name) + " - " + Enum.GetName(set.Type));
+                setFolderPath = FixInvalidCharsInPath(setFolderPath);
+                if (!Directory.Exists(setFolderPath) && !stopDownloadingImages)
+                    Directory.CreateDirectory(setFolderPath);
+
+                await Parallel.ForEachAsync(set.Cards, async (card, token) =>
                 {
-                    countCards += set.Cards.Count();
-                }
-                // Start Iterate trough all cards
-                foreach (Set set in copyList)
-                {
-#if DEBUG
                     try
                     {
-#endif
-                        string setFolderPath = System.IO.Path.Combine(folderDir, FixInvalidCharsInFile(set.Name) + " - " + Enum.GetName(set.Type));
-                        setFolderPath = FixInvalidCharsInPath(setFolderPath);
-                        if (!Directory.Exists(setFolderPath))
-                            Directory.CreateDirectory(setFolderPath);
-
-                        foreach (Card card in set.Cards)
+                        if (Application.Current.Dispatcher.Invoke(() => CheckStopButtonPressed()))
+                            return;
+                        
+                        Application.Current.Dispatcher.Invoke(() =>
                         {
-                            if (stopDownloadingImages)
+                            lock (locker)
                             {
-                                btnStop.IsEnabled = false;
-                                btnDowload.IsEnabled = true;
-                                lblProcess.Content = "Stopped";
-                                lblProcess.Foreground = Brushes.Black;
-                                processBar.Value = 0;
-                                return;
+                                processBar.Value = (int)(100f / countCards * count++);
+                                lblProcess.Content = "Downloading Set Images..." + processBar.Value + "%";
                             }
+                        });
 
-                            processBar.Value = (int)(100f / countCards * count++);
-                            lblProcess.Content = "Downloading Set Images..." + processBar.Value + "%";
+                        string cardFileName = card.LongID.Replace("/", "_").Replace("-", "_") + ".jpg";
+                        cardFileName = FixInvalidCharsInFile(cardFileName);
 
-                            string cardFileName = card.LongID.Replace("/", "_").Replace("-", "_") + ".jpg";
-                            cardFileName = FixInvalidCharsInFile(cardFileName);
-
-                            // Reloop 5x when Exception is thrown
-                            bool passed = false;
-                            int attempt = 1;
-                            do
+                        // Reloop 5x when Exception is thrown
+                        bool passed = false;
+                        int attempt = 1;
+                        do
+                        {
+                            try
                             {
-                                try
+                                byte[] data = await _httpClient.GetByteArrayAsync(card.ImageURL);
+                                await File.WriteAllBytesAsync(System.IO.Path.Combine(setFolderPath, cardFileName), data);
+                                passed = true;
+                            }
+                            catch (Exception e)
+                            {
+                                Log.Debug($"Card Download Failed. Attempt: {attempt}. Retry...");
+                                if (attempt == 5)
                                 {
-                                    byte[] data = await _httpClient.GetByteArrayAsync(card.ImageURL);
-                                    await File.WriteAllBytesAsync(System.IO.Path.Combine(setFolderPath, cardFileName), data);
-                                    passed = true;
-                                }
-                                catch (Exception e)
-                                {
-                                    Log.Debug($"Card Download Failed. Attempt: {attempt}. Retry...");
-                                    if (attempt == 5)
-                                    {
-                                        string message = $"Some error occured while downloading for Card.\n" +
-                                            $"ID: {card.LongID}\n" +
-                                            $"Name: {card.Name}\n" +
-                                            $"From Set {set.Name} - {Enum.GetName(set.Type)}\n";
-                                        string logMessage = $"\nFail log.txt can be found in Download Folder";
+                                    string message = $"Some error occured while downloading for Card.\n" +
+                                        $"ID: {card.LongID}\n" +
+                                        $"Name: {card.Name}\n" +
+                                        $"From Set {set.Name} - {Enum.GetName(set.Type)}\n";
+                                    string logMessage = $"\nFail log.txt can be found in Download Folder";
 
-                                        File.AppendAllText(System.IO.Path.Combine(folderDir, "log.txt"), message);
+                                    File.AppendAllText(System.IO.Path.Combine(folderDir, "log.txt"), message);
 
-                                        MessageBox.Show("[" + DateTime.Now + "] " + message + logMessage + "\n\n" + e);
-                                        break;
-                                    }
-                                    attempt++;
+                                    MessageBox.Show("[" + DateTime.Now + "] " + message + logMessage + "\n\n" + e);
+                                    break;
                                 }
-                            } while (!passed);
-                        }
-#if DEBUG
+                                attempt++;
+                            }
+                        } while (!passed);
                     }
-                    catch (Exception ex)
+                    catch (Exception e)
                     {
-                        Log.Debug("Error: " + ex);
+                        Log.Error("Fail:\n" + e);
                     }
-#endif
-                }
+                });
+            }
+            Application.Current.Dispatcher.Invoke(() =>
+            {
                 lblProcess.Content = "Done";
                 lblProcess.Foreground = Brushes.Black;
                 processBar.Value = 0;
                 btnDowload.IsEnabled = true;
                 btnStop.IsEnabled = false;
             });
+        }
+
+        private bool CheckStopButtonPressed()
+        {
+            if (stopDownloadingImages)
+            {
+                btnStop.IsEnabled = false;
+                btnDowload.IsEnabled = true;
+                lblProcess.Content = "Stopped";
+                lblProcess.Foreground = Brushes.Black;
+                processBar.Value = 0;
+                return true;
+            }
+            return false;
         }
 
         private string FixInvalidCharsInPath(string str)

@@ -8,6 +8,6 @@ namespace WeißSchwarzViewer.WPFHelper
 {
     public class UIPropertys
     {
-        public static bool HitTestVisible = false;
+        private static int maxUserParallelism = 10;
     }
 }
