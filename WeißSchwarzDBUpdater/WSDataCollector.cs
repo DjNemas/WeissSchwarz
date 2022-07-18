@@ -30,6 +30,8 @@ namespace WeißSchwarzDBUpdater
 
         private readonly bool logWithEx = false; // Set true for more detailed Exception Log
 
+        private readonly int instancesOfTasks = 10;
+
         public WSDataCollector(string chromePath, bool headless)
         {
             this.chromePath = chromePath;
@@ -60,7 +62,7 @@ namespace WeißSchwarzDBUpdater
             Log.Info(sets.Count + " Sets found.");
 
             // Define How much Task allowed at same Time
-            SemaphoreSlim maxThread = new SemaphoreSlim(1);
+            SemaphoreSlim maxThread = new SemaphoreSlim(instancesOfTasks);
             List<Task> taskListToWait = new();
 
             // Set to True if new Data are updated in DB
