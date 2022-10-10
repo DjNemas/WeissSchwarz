@@ -11,6 +11,7 @@ namespace WeißSchwarzDBUpdater
     {
         internal static WSContext db;
         private static WSDataCollector collector;
+        private static readonly string chromeDriverPath = "G:\\binarys\\chromedriver";
         static void Main(string[] args)
         {
             // Init DB
@@ -18,7 +19,7 @@ namespace WeißSchwarzDBUpdater
             {
                 Log.Debug("DB Connected");
                 // Start Collect
-                collector = new("chromedriver", true);
+                collector = new(chromeDriverPath, true);
                 collector.StartCollect();
             }            
             Console.ReadKey();

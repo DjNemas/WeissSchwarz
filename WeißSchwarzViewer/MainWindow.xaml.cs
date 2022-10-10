@@ -26,6 +26,9 @@ using static WeißSchwarzViewer.DB.DatabaseContext;
 using Microsoft.WindowsAPICodePack.Dialogs;
 using WeißSchwarzViewer.WPFHelper;
 using System.Text.RegularExpressions;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
+using System.Windows.Media.Animation;
+using MySqlX.XDevAPI;
 
 namespace WeißSchwarzViewer
 {
@@ -34,7 +37,7 @@ namespace WeißSchwarzViewer
     /// </summary>
     public partial class MainWindow : Window
     {
-        private readonly float _AppVersion = 1.3f;
+        private readonly float _AppVersion = 1.4f;
 #if DEBUG
         [DllImport("Kernel32")]
         private static extern void AllocConsole();
@@ -132,7 +135,7 @@ namespace WeißSchwarzViewer
                     db.SaveChanges();
                 }
                 // Check if new Data Exist on Rest API
-                if (version.Version < int.Parse(await _httpClient.GetStringAsync(new Uri("https://djnemashome.de:3939/v1/ws/dataversion"))))
+                if (version.Version < int.Parse(await _httpClient.GetStringAsync(new Uri("https://djnemas.de:3939/v1/ws/dataversion"))))
                 {
                     APIHasUpdate();
                 }
@@ -180,7 +183,7 @@ namespace WeißSchwarzViewer
 
             DatabaseContext db = new();
             int count = 1;
-            Stream jsonDataStream = await _httpClient.GetStreamAsync(new Uri("https://djnemashome.de:3939/v1/ws/sets/all"));
+            Stream jsonDataStream = await _httpClient.GetStreamAsync(new Uri("https://djnemas.de:3939/v1/ws/sets/all"));
             List<Set>? sets = null;
             try
             {
@@ -207,7 +210,9 @@ namespace WeißSchwarzViewer
                     {
                         try
                         {
-                            await db.Sets.AddAsync(set);
+                            EntityEntry<Set> result = await db.Sets.AddAsync(set);
+                            Console.WriteLine(result.CurrentValues.GetValue<int>("ID")); 
+                            await db.SaveChangesAsync();
                         }
                         catch (Exception ex)
                         {
@@ -218,7 +223,7 @@ namespace WeißSchwarzViewer
                 try
                 {
                     // Get new Database Version
-                    string dataVersionAPI = await _httpClient.GetStringAsync(new Uri("https://djnemashome.de:3939/v1/ws/dataversion"));
+                    string dataVersionAPI = await _httpClient.GetStringAsync(new Uri("https://djnemas.de:3939/v1/ws/dataversion"));
                     LocalDataVersion? localVersion = db.DataVersion.FirstOrDefault(x => x.ID == 1);
                     localVersion.Version = int.Parse(dataVersionAPI);
 
@@ -239,6 +244,16 @@ namespace WeißSchwarzViewer
                     lblProcess.Content = "Error";
                     lblProcess.Foreground = Brushes.Red;
                     processBar.Value = 0;
+
+
+                    lblVersion.Content = "Error Occured. Try to fix after 5 sec...";
+                    lblVersion.Foreground = Brushes.Red;
+                    await Task.Delay(TimeSpan.FromSeconds(5));
+                    lblVersion.Foreground = Brushes.Aqua;
+                    lblVersion.Content = "Fix ongoing please wait...";
+
+                    await FixDBOnError();
+
                 }
                 finally
                 {
@@ -252,6 +267,27 @@ namespace WeißSchwarzViewer
                 lblProcess.Foreground = Brushes.Red;
                 processBar.Value = 0;
             }
+        }
+
+        private async Task FixDBOnError()
+        {
+            lblProcess.Foreground = Brushes.Aqua;
+            lblProcess.Content = "Fix";
+            processBar.Value = 0;
+
+            DatabaseContext db = new();
+            db.Database.EnsureDeleted();
+            processBar.Value = 50;
+
+            db.Database.EnsureCreated();
+            processBar.Value = 100;
+
+            // Add Version 0
+            LocalDataVersion version = new() { Version = 0 };
+            db.DataVersion.Add(version);
+            db.SaveChanges();
+
+            await UpdateSets();
         }
 
         private void DisableUI()
