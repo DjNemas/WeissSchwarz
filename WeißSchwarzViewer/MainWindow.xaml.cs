@@ -29,6 +29,7 @@ using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using System.Windows.Media.Animation;
 using MySqlX.XDevAPI;
+using Google.Protobuf.Collections;
 
 namespace WeißSchwarzViewer
 {
@@ -609,6 +610,7 @@ namespace WeißSchwarzViewer
                 lblProcess.Foreground = Brushes.Black;
                 processBar.Value = 0;
                 btnDowloadImages.IsEnabled = true;
+                btnDownloadText.IsEnabled = true;
                 btnStop.IsEnabled = false;
             });
         }

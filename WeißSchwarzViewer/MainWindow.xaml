@@ -7,7 +7,7 @@
         xmlns:local="clr-namespace:WeißSchwarzViewer"
         xmlns:sys="clr-namespace:System;assembly=mscorlib"
         mc:Ignorable="d"
-        Title="Weiß Schwarz Set Viewer © by Nemas#0185 (Discord)"  Width="1650" Height="1000" Background="DimGray">
+        Title="Weiß Schwarz Set Viewer © by Nemas#0185 (Discord)"  Width="1200" Height="700" Background="DimGray" WindowState="Maximized">
 
     <Window.Resources>
         <Style x:Key="_ListBoxItemStyle" TargetType="ListBoxItem">
@@ -74,7 +74,7 @@
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
-                    <RowDefinition/>
+                    <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
                 
                 <Label Grid.Row="0" Content="Sets" HorizontalContentAlignment="Center"/>
