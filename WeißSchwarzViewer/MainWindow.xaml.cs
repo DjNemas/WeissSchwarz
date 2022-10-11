@@ -44,7 +44,7 @@ namespace WeißSchwarzViewer
 #endif
         private HttpClient _httpClient;
 
-        private bool stopDownloadingImages = false;
+        private bool stopDownloading = false;
 
         private static object locker = new();
 
@@ -142,7 +142,7 @@ namespace WeißSchwarzViewer
                 else
                 {
                     await Task.Delay(1000);
-                    lblVersion.Foreground = Brushes.Green;
+                    lblVersion.Foreground = Brushes.LightGreen;
                     lblVersion.Content = "Latest Version";
                 }
             });
@@ -169,7 +169,7 @@ namespace WeißSchwarzViewer
                 EnableUI();
 
                 lblVersion.Content = "Latest Version";
-                lblVersion.Foreground = Brushes.Green;
+                lblVersion.Foreground = Brushes.LightGreen;
             });
         }
 
@@ -177,9 +177,9 @@ namespace WeißSchwarzViewer
         {
             btnUpdate.IsEnabled = false;
             lblProcess.Content = "Updating... 0%";
-            lblProcess.Foreground = Brushes.DarkCyan;
+            lblProcess.Foreground = Brushes.Cyan;
             lblVersion.Content = "Updating...";
-            lblVersion.Foreground = Brushes.DarkCyan;
+            lblVersion.Foreground = Brushes.Cyan;
 
             DatabaseContext db = new();
             int count = 1;
@@ -501,7 +501,7 @@ namespace WeißSchwarzViewer
                 tbDirectory.Text = dialog.FileName;
         }
 
-        private async void btnDowload_Click(object sender, RoutedEventArgs e)
+        private async void btnDowloadImages_Click(object sender, RoutedEventArgs e)
         {
             if (string.IsNullOrEmpty(tbDirectory.Text))
             {
@@ -516,11 +516,12 @@ namespace WeißSchwarzViewer
 
             Application.Current.Dispatcher.Invoke(() =>
             {
-                stopDownloadingImages = false;
-                btnDowload.IsEnabled = false;
+                stopDownloading = false;
+                btnDowloadImages.IsEnabled = false;
+                btnDownloadText.IsEnabled = false;
                 btnStop.IsEnabled = true;
                 lblProcess.Content = "Downloading... 0%";
-                lblProcess.Foreground = Brushes.DarkCyan;
+                lblProcess.Foreground = Brushes.Cyan;
             });
 
             // Copy Card in new List
@@ -543,7 +544,7 @@ namespace WeißSchwarzViewer
             {
                 string setFolderPath = System.IO.Path.Combine(folderDir, FixInvalidCharsInFile(set.Name) + " - " + Enum.GetName(set.Type));
                 setFolderPath = FixInvalidCharsInPath(setFolderPath);
-                if (!Directory.Exists(setFolderPath) && !stopDownloadingImages)
+                if (!Directory.Exists(setFolderPath) && !stopDownloading)
                     Directory.CreateDirectory(setFolderPath);
 
                 await Parallel.ForEachAsync(set.Cards, async (card, token) =>
@@ -607,17 +608,18 @@ namespace WeißSchwarzViewer
                 lblProcess.Content = "Done";
                 lblProcess.Foreground = Brushes.Black;
                 processBar.Value = 0;
-                btnDowload.IsEnabled = true;
+                btnDowloadImages.IsEnabled = true;
                 btnStop.IsEnabled = false;
             });
         }
 
         private bool CheckStopButtonPressed()
         {
-            if (stopDownloadingImages)
+            if (stopDownloading)
             {
                 btnStop.IsEnabled = false;
-                btnDowload.IsEnabled = true;
+                btnDowloadImages.IsEnabled = true;
+                btnDownloadText.IsEnabled = true;
                 lblProcess.Content = "Stopped";
                 lblProcess.Foreground = Brushes.Black;
                 processBar.Value = 0;
@@ -653,7 +655,173 @@ namespace WeißSchwarzViewer
 
         private void Stop_Click(object sender, RoutedEventArgs e)
         {
-            stopDownloadingImages = true;
+            stopDownloading = true;
+        }
+
+        private async void btnDownloadText_Click(object sender, RoutedEventArgs e)
+        {
+            if (string.IsNullOrEmpty(tbDirectory.Text))
+            {
+                MessageBox.Show("Please select a folder first.");
+                return;
+            }
+            if (lbSets.SelectedItems.Count < 1)
+            {
+                MessageBox.Show("Please select minimum one Set.");
+                return;
+            }
+
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                stopDownloading = false;
+                btnDowloadImages.IsEnabled = false;
+                btnDownloadText.IsEnabled = false;
+                btnStop.IsEnabled = true;
+                lblProcess.Content = "Downloading... 0%";
+                lblProcess.Foreground = Brushes.Cyan;
+            });
+            // Workaround for seeing Process in work. On Powerfull PCs its insta finished.
+            await Task.Delay(TimeSpan.FromSeconds(2));
+
+            // Copy Card in new List
+            List<Set> copyList = new();
+            foreach (Set set in lbSets.SelectedItems)
+            {
+                copyList.Add(set);
+            }
+            float count = 1;
+            float countCards = 0;
+            string folderDir = tbDirectory.Text;
+
+            // Calculate Count for Progressbar
+            foreach (Set set in copyList)
+            {
+                countCards += set.Cards.Count();
+            }
+            // Start Iterate trough all cards
+            foreach (Set set in copyList)
+            {
+                string setFolderPath = System.IO.Path.Combine(folderDir, FixInvalidCharsInFile(set.Name) + " - " + Enum.GetName(set.Type));
+                setFolderPath = FixInvalidCharsInPath(setFolderPath);
+                if (!Directory.Exists(setFolderPath) && !stopDownloading)
+                    Directory.CreateDirectory(setFolderPath);                
+
+                bool? txtSelected = Application.Current.Dispatcher.Invoke(CheckedText);
+                // JSON
+                if (txtSelected != null && !(bool)txtSelected)
+                {
+                    if (Application.Current.Dispatcher.Invoke(() => CheckStopButtonPressed()))
+                        return;
+
+                    Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        lock (locker)
+                        {
+                            processBar.Value = (int)(100f / copyList.Count * count++);
+                            lblProcess.Content = "Downloading Set Text..." + processBar.Value + "%";
+                        }
+                    });
+
+                    string fileName = "JsonTextData.json";
+                    string jsonString = JsonSerializer.Serialize(set);
+                    try
+                    {
+                        File.WriteAllText(System.IO.Path.Combine(setFolderPath, fileName), jsonString);
+                    }
+                    catch (Exception)
+                    {
+                        string message = $"Some error occured while downloading JSON for Set.\n" +
+                                $"From Set {set.Name} - {Enum.GetName(set.Type)}\n";
+                        string logMessage = $"\nFail log.txt can be found in Download Folder";
+
+                        File.AppendAllText(System.IO.Path.Combine(folderDir, "log.txt"), message);
+
+                        MessageBox.Show("[" + DateTime.Now + "] " + message + logMessage + "\n\n" + e);
+                        return;
+                    }
+                }
+                // TXT
+                else if (txtSelected != null && (bool)txtSelected)
+                {
+                    await Parallel.ForEachAsync(set.Cards, async (card, token) =>
+                    {
+                        Application.Current.Dispatcher.Invoke(() =>
+                        {
+                            lock (locker)
+                            {
+                                processBar.Value = (int)(100f / countCards * count++);
+                                lblProcess.Content = "Downloading Set Text..." + processBar.Value + "%";
+                            }
+                        });
+
+                        if (Application.Current.Dispatcher.Invoke(() => CheckStopButtonPressed()))
+                            return;
+
+                        string cardFileName = card.LongID.Replace("/", "_").Replace("-", "_") + ".txt";
+                        cardFileName = FixInvalidCharsInFile(cardFileName);
+
+                        StringBuilder builder = new();
+                        builder.AppendLine("ID: " + card.CardID);
+                        builder.AppendLine("Name: " + card.Name);
+                        builder.AppendLine("Rarity: " + card.Rarity);
+                        builder.AppendLine("Color: " + Enum.GetName(card.Color));
+                        builder.AppendLine("Type: " + card.Type);
+                        builder.AppendLine("Level: " + card.Level);
+                        builder.AppendLine("Cost: " + card.Cost);
+                        builder.AppendLine("Power: " + card.Power);
+                        builder.AppendLine("Soul: " + card.Soul);
+                        if(card.Triggers != null)
+                            foreach (var trigger in card.Triggers)
+                            {
+                                builder.AppendLine("Trigger: " + Enum.GetName(trigger.TriggerType));
+                            }
+                        if (card.Traits != null)
+                            foreach (var trait in card.Traits)
+                            {
+                                builder.AppendLine("Trait: " + trait.Name);
+                            }
+                        builder.AppendLine("Skill: " + card.SkillText);
+                        builder.AppendLine("Flavor: " + card.FalvorText);
+                        builder.AppendLine("Illustration: " + card.IllustrationText);
+
+                        try
+                        {
+                            File.WriteAllText(System.IO.Path.Combine(setFolderPath, cardFileName), builder.ToString());
+
+                        }
+                        catch (Exception e)
+                        {
+                            string message = $"Some error occured while downloading TXT for Set.\n" +
+                                $"From Set {set.Name} - {Enum.GetName(set.Type)}\n";
+                            string logMessage = $"\nFail log.txt can be found in Download Folder";
+
+                            File.AppendAllText(System.IO.Path.Combine(folderDir, "log.txt"), message);
+
+                            MessageBox.Show("[" + DateTime.Now + "] " + message + logMessage + "\n\n" + e);
+                            return;
+                        }
+                    });
+                }
+            }
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                lblProcess.Content = "Done";
+                lblProcess.Foreground = Brushes.Black;
+                processBar.Value = 0;
+                btnDowloadImages.IsEnabled = true;
+                btnDownloadText.IsEnabled = true;
+                btnStop.IsEnabled = false;
+            });
+
+        }
+        private bool? CheckedText()
+        {
+            if (rbTextFormatTXT.IsChecked != null && (bool)rbTextFormatTXT.IsChecked)
+                return true;
+            else if (rbTextFormatJSON.IsChecked != null && (bool)rbTextFormatJSON.IsChecked)
+                return false;
+            else
+                return null;
         }
     }
 }
