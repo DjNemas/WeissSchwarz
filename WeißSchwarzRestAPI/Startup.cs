@@ -52,12 +52,12 @@ namespace WSRestAPI
                 });
                 c.AddServer(new OpenApiServer()
                 {
-                    Url = @"https://djnemashome.de:3939",
+                    Url = @"https://djnemas.de:3939",
                     Description = "With SSL"
                 });
                 c.AddServer(new OpenApiServer()
                 {
-                    Url = @"http://djnemashome.de:1337",
+                    Url = @"http://djnemas.de:1337",
                     Description = "Without SSL"
                 });
                 var xmlFilename = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";

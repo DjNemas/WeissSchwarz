@@ -30,7 +30,9 @@ namespace WeißSchwarzDBUpdater
 
         private readonly bool logWithEx = false; // Set true for more detailed Exception Log
 
-        private readonly int instancesOfTasks = 10;
+        private readonly int instancesOfTasks = 5;
+
+        private readonly int beginFromSet = 170 - 1; // (x) - 1 default. x = 1
 
         public WSDataCollector(string chromePath, bool headless)
         {
@@ -68,13 +70,12 @@ namespace WeißSchwarzDBUpdater
             // Set to True if new Data are updated in DB
             bool newData = false;
             // Load every Set into Task.
-            for (int i = 0; i < sets.Count; i++)
+            for (int i = beginFromSet; i < sets.Count; i++)
             {
                 maxThread.Wait();
                 Log.Info("Start Task for Set " + (i + 1));
                 taskListToWait.Add(Task.Factory.StartNew((index) =>
-                {
-                    
+                {                    
                     // Open New Window and Load Weiß Schwarz Page
                     Selenium window = CreateNewWindow(headless);
                     ClickOnXSet(window.driver, (int)index);
@@ -108,7 +109,13 @@ namespace WeißSchwarzDBUpdater
             // Update DataVersion in DB if new Data was Found
             if(newData)
             {
-                Program.db.DataVersion.FirstOrDefault(x => x.ID == 1).Version += 1;
+                DataVersion version = Program.db.DataVersion.FirstOrDefault(x => x.ID == 1);
+                if (version == null)
+                {
+                    Program.db.DataVersion.Add(new DataVersion() { Version = 1 });
+                }
+                else
+                    version.ID += 1;
                 Program.db.SaveChanges();
                 newData = false;
             }            
@@ -161,7 +168,11 @@ namespace WeißSchwarzDBUpdater
                 catch (Exception ex)
                 {
                     acceptedCookie = false;
-                    Log.Error("Bad Gateway on Cookies.");
+#if DEBUG
+                    Log.Error("Bad Gateway on Cookies.\n" + ex);
+#else
+                    Log.Error("Bad Gateway on Cookies.\n");
+#endif
                     if (logWithEx) Log.Error(ex.ToString());
                     driver.Navigate().GoToUrl(wsURL);
                     new Actions(driver).Pause(TimeSpan.FromSeconds(5)).Perform();
@@ -319,7 +330,7 @@ namespace WeißSchwarzDBUpdater
                 try
                 {
                     cardDetail = driver.FindElement(By.Id("cardDetail")).FindElements(By.XPath("table/tbody/tr"));
-                    #region Index [0]
+#region Index [0]
                     // ImageURL
                     string cardImageURL = cardDetail[0].FindElement(By.XPath("td/img")).GetAttribute("src");
                     Log.Debug("ImageURL: " + cardImageURL);
@@ -329,9 +340,9 @@ namespace WeißSchwarzDBUpdater
                     // Remove ASCII CR ("\r")
                     cardName = cardName.Remove(cardName.IndexOf("\r"), 1);
                     Log.Debug("CardName: " + cardName);
-                    #endregion
+#endregion
 
-                    #region Index [1]
+#region Index [1]
                     var elements = cardDetail[1].FindElements(By.XPath("td"));
 
                     // CardPrefix
@@ -349,9 +360,9 @@ namespace WeißSchwarzDBUpdater
                     // Card Rarity
                     string cardRarity = elements[1].Text;
                     Log.Debug("Rarity: " + cardRarity);
-                    #endregion
+#endregion
 
-                    #region Index [2]
+#region Index [2]
                     elements = cardDetail[2].FindElements(By.XPath("td"));
                     // Card Side
                     string sideImgURL = elements[1].FindElement(By.XPath("img")).GetAttribute("src");
@@ -361,9 +372,9 @@ namespace WeißSchwarzDBUpdater
                     else if (sideImgURL.Contains("s.gif"))
                         cardSide = Side.Schwarz;
                     Log.Debug("CardSide: " + cardSide.ToString());
-                    #endregion
+#endregion
 
-                    #region Index [3]
+#region Index [3]
                     elements = cardDetail[3].FindElements(By.XPath("td"));
                     // Card Type
                     WeißSchwarzSharedClasses.Models.CardType cardType = WeißSchwarzSharedClasses.Models.CardType.None;
@@ -384,12 +395,12 @@ namespace WeißSchwarzDBUpdater
                     Color cardColor = Color.None;
                     string colorLink = null;
 
-                    #region Fix Card RWBY/BRO2021-01 PR
+#region Fix Card RWBY/BRO2021-01 PR
                     if (cardLongID == "RWBY/BRO2021-01 PR")
                         colorLink = "green.gif";
                     else if (cardLongID == "FS/S36-PE02")
                         colorLink = "red.gif";
-                    #endregion
+#endregion
                     else
                         colorLink = elements[1].FindElement(By.XPath("img")).GetAttribute("src");
 
@@ -402,9 +413,9 @@ namespace WeißSchwarzDBUpdater
                     else if (colorLink.Contains("blue.gif"))
                         cardColor = Color.Blue;
                     Log.Debug("CardColor: " + cardColor.ToString());
-                    #endregion
+#endregion
 
-                    #region Index [4]
+#region Index [4]
                     elements = cardDetail[4].FindElements(By.XPath("td"));
                     // Level
                     int? cardLevel = null;
@@ -421,9 +432,9 @@ namespace WeißSchwarzDBUpdater
                     else
                         cardCost = int.Parse(elements[1].Text);
                     Log.Debug("CardCost: " + cardCost.ToString());
-                    #endregion
+#endregion
 
-                    #region Index [5]
+#region Index [5]
                     elements = cardDetail[5].FindElements(By.XPath("td"));
                     // Power
                     int? cardPower = null;
@@ -441,10 +452,10 @@ namespace WeißSchwarzDBUpdater
                     else
                         cardSoul = imgElementsSouls.Count;
                     Log.Debug("CardSoul: " + cardSoul.ToString());
-                    #endregion
+#endregion
 
                     // Fix broken Table Card // Homepage doesn't create right doom
-                    #region Fix Card SAO/S51-E017
+#region Fix Card SAO/S51-E017
                     if (cardLongID == "SAO/S51-E017")
                     {
                         List<Trigger> cardTriggerListFix = new();
@@ -481,8 +492,8 @@ namespace WeißSchwarzDBUpdater
                         cards[currentSetNumber].Add(cardFix);
                         break;
                     }
-                    #endregion
-                    #region Fix Card RZ/S46-E068 || RZ/S46-E068SP
+#endregion
+#region Fix Card RZ/S46-E068 || RZ/S46-E068SP
                     if (cardLongID == "RZ/S46-E068" || cardLongID == "RZ/S46-E068SP")
                     {
                         List<Trigger> cardTriggerListFix = new();
@@ -519,9 +530,9 @@ namespace WeißSchwarzDBUpdater
                         cards[currentSetNumber].Add(cardFix);
                         break;
                     }
-                    #endregion
+#endregion
 
-                    #region Index [6]
+#region Index [6]
                     elements = cardDetail[6].FindElements(By.XPath("td"));
                     // Trigger
                     List<Trigger> cardTriggerList = null;
@@ -577,9 +588,9 @@ namespace WeißSchwarzDBUpdater
                         {
                             Log.Debug("CardTrait: " + item.Name);
                         }
-                    #endregion
+#endregion
 
-                    #region Index [7]
+#region Index [7]
                     elements = cardDetail[7].FindElements(By.XPath("td"));
                     string cardSkillText = null;
                     if (elements[0].Text == string.Empty || elements[0].Text == "-" || elements[0].Text == "－")
@@ -587,9 +598,9 @@ namespace WeißSchwarzDBUpdater
                     else
                         cardSkillText = elements[0].Text;
                     Log.Debug("CardSkillText: " + cardSkillText);
-                    #endregion
+#endregion
 
-                    #region Index [8]
+#region Index [8]
                     elements = cardDetail[8].FindElements(By.XPath("td"));
                     string cardFalvorText = null;
                     if (elements[0].Text == string.Empty || elements[0].Text == "#NAME?" || elements[0].Text == "-" || elements[0].Text == "－")
@@ -597,9 +608,9 @@ namespace WeißSchwarzDBUpdater
                     else
                         cardFalvorText = elements[0].Text;
                     Log.Debug("CardFalvorText: " + cardFalvorText);
-                    #endregion
+#endregion
 
-                    #region Index [9]
+#region Index [9]
                     string cardIllustrator = null;
                     if (cardDetail.Count > 9)
                     {
@@ -610,9 +621,9 @@ namespace WeißSchwarzDBUpdater
                             cardIllustrator = elements[0].Text;
                         Log.Debug("CardIllustrator: " + cardIllustrator);
                     }
-                    #endregion
+#endregion
 
-                    #region Create Card Object
+#region Create Card Object
                     Card card = new()
                     {
                         CardID = cardID,
@@ -635,7 +646,7 @@ namespace WeißSchwarzDBUpdater
                         Side = cardSide
                     };
                     cards[currentSetNumber].Add(card);
-                    #endregion
+#endregion
 
                     error = false;
                 }
