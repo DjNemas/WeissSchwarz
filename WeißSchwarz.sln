@@ -9,7 +9,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WeißSchwarzSharedClasses",
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WeißSchwarzRestAPI", "WeißSchwarzRestAPI\WeißSchwarzRestAPI.csproj", "{95115AAA-CF23-4DBA-8657-8104736E3611}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WeißSchwarzViewer", "WeißSchwarzViewer\WeißSchwarzViewer.csproj", "{D12DC608-554D-4418-B95F-81D8E4A814BC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WeißSchwarzViewer", "WeißSchwarzViewer\WeißSchwarzViewer.csproj", "{D12DC608-554D-4418-B95F-81D8E4A814BC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WeißSchwarzCardResolutionFixer", "WeißSchwarzCardResolutionFixer\WeißSchwarzCardResolutionFixer.csproj", "{1FDD4C7B-D95A-4B43-B738-46251EEA1251}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,6 +35,10 @@ Global
 		{D12DC608-554D-4418-B95F-81D8E4A814BC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D12DC608-554D-4418-B95F-81D8E4A814BC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D12DC608-554D-4418-B95F-81D8E4A814BC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1FDD4C7B-D95A-4B43-B738-46251EEA1251}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1FDD4C7B-D95A-4B43-B738-46251EEA1251}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1FDD4C7B-D95A-4B43-B738-46251EEA1251}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1FDD4C7B-D95A-4B43-B738-46251EEA1251}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

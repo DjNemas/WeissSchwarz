@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net6.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <UseWPF>true</UseWPF>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Selenium.WebDriver" Version="4.5.1" />
+    <PackageReference Include="WebDriverManager" Version="2.16.0" />
+    <PackageReference Include="WindowsAPICodePack" Version="1.1.3" />
+  </ItemGroup>
+
+</Project>

@@ -365,3 +365,4 @@ config.json
 *.json
 /WeißSchwarzRestAPI/Cert/fullchain.pem
 /WeißSchwarzRestAPI/Cert/privkey.pem
+/WeißSchwarzCardResolutionFixer/logic_idea.jpg
