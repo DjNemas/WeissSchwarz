@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:WeißSchwarzCardResolutionFixer"
         mc:Ignorable="d"
-        Title="Weiß Schwarz Card Resoution Fixer" Height="120" Width="300" Background="DimGray">
+        Title="Weiß Schwarz Card Resoution Fixer v1.0" Height="120" Width="300" Background="DimGray">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -14,9 +14,9 @@
         </Grid.RowDefinitions>
 
         <StackPanel Grid.Row="0" Orientation="Horizontal">
-            <Button x:Name="btnStartFix" Content="Start Fix" IsEnabled="True" Margin="5" Padding="2" Click="btnStartFix_Click"/>
+            <Button x:Name="btnStartFix" Content="Start Fix" IsEnabled="False" Margin="5" Padding="2" Click="btnStartFix_Click"/>
             <Button x:Name="btnSelectDir" Content="Select Dir" Margin="0 5 5 5" Padding="2" Click="btnSelectDir_Click"/>
-            <Label Name="lblCardsFound" Content="Cards found: 0" Margin="0 5 5 5"/>
+            <Label Name="lblCardsFound" Content="Cards selected: 0" Margin="0 5 5 5"/>
         </StackPanel>
         
         <Grid Grid.Row="2">
@@ -25,7 +25,7 @@
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
             <ProgressBar Grid.Column="0" x:Name="pbProgress" Margin="3" Minimum="0" Maximum="100" Value="0" Height="15"/>
-            <Label Grid.Column="1" Content="Status" Foreground="AliceBlue"/>
+            <Label Grid.Column="1" Name="lblStatus" Content="Status"/>
         </Grid>
         
 

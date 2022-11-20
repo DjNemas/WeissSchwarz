@@ -20,6 +20,8 @@ using OpenQA.Selenium.DevTools.V104.Browser;
 using System.ComponentModel;
 using System.Threading.Tasks;
 using System.Diagnostics.Metrics;
+using System.Windows.Media;
+using static System.Net.WebRequestMethods;
 
 namespace WeißSchwarzCardResolutionFixer
 {
@@ -33,14 +35,14 @@ namespace WeißSchwarzCardResolutionFixer
         private static extern void AllocConsole();
 #endif
 
-        private static List<string> imageList = new();
+        private static List<ImageDetails> imageList = new();
 
         private readonly string chromeDriverFolder = "./driver/";
         private readonly string chromeDriverFile = "chromedriver.exe";
         private string? chromePath;
 
         private ChromeDriver driver;
-        private readonly bool headless = false;
+        private readonly bool headless = true;
         private readonly Uri apiURL = new Uri("https://bigjpg.com/");
 
 
@@ -91,8 +93,8 @@ namespace WeißSchwarzCardResolutionFixer
             using (Stream data = httpClient.GetStreamAsync(browserVersionBinary).Result)
             {
                 
-                if(File.Exists(zipPath))
-                    File.Delete(zipPath);
+                if(System.IO.File.Exists(zipPath))
+                    System.IO.File.Delete(zipPath);
                 using (FileStream fs = new(zipPath, FileMode.CreateNew))
                 {
                     data.CopyTo(fs);
@@ -102,7 +104,7 @@ namespace WeißSchwarzCardResolutionFixer
             za.ExtractToDirectory(chromeDriverFolder, true);
             za.Dispose();
 
-            File.Delete(zipPath);
+            System.IO.File.Delete(zipPath);
         }
 
         private void CreateChromeDriver()
@@ -117,30 +119,120 @@ namespace WeißSchwarzCardResolutionFixer
             driver = new ChromeDriver(driverService, options);
         }
 
-        private async void btnStartFix_Click(object sender, RoutedEventArgs e)
+        private void btnStartFix_Click(object sender, RoutedEventArgs e)
         {
-            float counter = 1;
+            btnStartFix.IsEnabled = false;
+            btnSelectDir.IsEnabled = false;
+            Task.Factory.StartNew(WorkAsync);
+            Console.WriteLine("Done");
+        }
 
-            pbProgress.Value = 0;
+        private async Task WorkAsync()
+        {
+            Application.Current.Dispatcher.Invoke(() => {
+                pbProgress.Value = 0;
+                lblStatus.Foreground = Brushes.Aqua;
+                lblStatus.Content = "Process Started...";
+            });
 
             driver.Navigate().GoToUrl(apiURL);
             driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(2);
             await UploadImages();
+            await FixCards();
 
-            Console.WriteLine("Done");
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                lblCardsFound.Foreground = Brushes.Black;
+                lblCardsFound.Content = "Cards selected: 0";
+                btnStartFix.IsEnabled = false;
+                btnSelectDir.IsEnabled = true;
+                lblStatus.Foreground = Brushes.LightGreen;
+                lblStatus.Content = "Done";
+            });
+        }
+        private Task FixCards()
+        {
+            IWebElement divFiles = driver.FindElement(By.Id("files"));
+            Console.WriteLine();
+
+            int cardsToFix = divFiles.FindElements(By.XPath("./div")).Count;
+            int indexCounter = 0;
+
+            foreach(var div in divFiles.FindElements(By.XPath("./div")))
+            {
+                Application.Current.Dispatcher.Invoke(() => {
+                    pbProgress.Value = (int)(100f / (float)cardsToFix * ((float)indexCounter + 1f));
+                    lblStatus.Foreground = Brushes.Aqua;
+                    lblStatus.Content = $"Fix Card {(indexCounter + 1)}...";
+                });
+
+                div.FindElement(By.XPath("./div[2]/button[1]")).Click();
+                driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromMilliseconds(200);
+                driver.FindElement(By.Id("big_ok")).Click();
+                driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromMilliseconds(200);
+
+                WaitForDownloadLink(indexCounter++, div);
+            }
+            return Task.CompletedTask;
+        }
+
+        private void WaitForDownloadLink(int index, IWebElement element)
+        {
+            while (true)
+            {
+                string downloadLink = element.FindElement(By.XPath("./div[2]/a[1]")).GetAttribute("href");
+                if (string.IsNullOrEmpty(downloadLink))
+                {
+                    Task.Delay(TimeSpan.FromSeconds(1)).Wait();
+                    continue;
+                }
+                imageList[index].downloadLink = downloadLink;
+                break;
+            }
+
+            HttpClient client = new HttpClient();
+            using (Stream data = client.GetStreamAsync(imageList[index].downloadLink).Result)
+            {
+                FileInfo img = new FileInfo(imageList[index].filePath);
+
+                string fixDirectory = Path.Combine(img.DirectoryName, "FixedCards");
+                if(!Directory.Exists(fixDirectory))
+                    Directory.CreateDirectory(fixDirectory);
+
+                if (System.IO.File.Exists(Path.Combine(fixDirectory, img.Name)))
+                    System.IO.File.Delete(Path.Combine(fixDirectory, img.Name));
+
+                using (FileStream fs = new(Path.Combine(fixDirectory, img.Name), FileMode.CreateNew))
+                {
+                    data.CopyTo(fs);
+                }
+            }
         }
 
         private Task UploadImages()
         {
             float counter = 1;
-            foreach (var imagePath in imageList)
+            Application.Current.Dispatcher.Invoke(() =>
             {
-                pbProgress.Value = (int)(100f / imageList.Count * counter++);
+                lblStatus.Foreground = Brushes.Aqua;
+                lblStatus.Content = "Uploading Images...";
+            });
+            
+            foreach (var image in imageList)
+            {
+                Application.Current.Dispatcher.Invoke(() =>
+                    pbProgress.Value = (int)(100f / imageList.Count * counter++)
+                    );
 
-                driver.FindElement(By.Id("fileupload")).SendKeys(imagePath);
+                driver.FindElement(By.Id("fileupload")).SendKeys(image.filePath);
                 driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromMilliseconds(500);
-
+                
             }
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                lblStatus.Foreground = Brushes.LightGreen;
+                lblStatus.Content = "Done";
+            });
             return Task.CompletedTask;
         }
 
@@ -154,14 +246,15 @@ namespace WeißSchwarzCardResolutionFixer
                 DirectoryInfo dirInfo = new(Path.GetFullPath(dialog.FileName));
                 List<FileInfo> listFiles = dirInfo.EnumerateFiles().ToList();
 
+                imageList.Clear();
+
                 int countImageFiles = 0;
                 foreach (var file in listFiles)
                 {
                     if (file.Extension == ".jpg")
                     {
                         countImageFiles++;
-                        imageList.Add(file.FullName);
-                        Console.WriteLine(file.FullName);
+                        imageList.Add(new(file.FullName));
                     }
                 }
                 if(countImageFiles < 0)
@@ -169,8 +262,8 @@ namespace WeißSchwarzCardResolutionFixer
                     MessageBox.Show("No Images found.");
                     return;
                 }
-                lblCardsFound.Content = $"Cards Found: " + countImageFiles;
-                lblCardsFound.Foreground = System.Windows.Media.Brushes.Aqua;
+                lblCardsFound.Content = $"Cards selected: " + countImageFiles;
+                lblCardsFound.Foreground = Brushes.Aqua;
                 btnStartFix.IsEnabled = true;
             }
         }
