@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using WeißSchwarzSharedClasses;
 using WeißSchwarzSharedClasses.DB;
 using WeißSchwarzSharedClasses.Models;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace WeißSchwarzDBUpdater
 {
@@ -20,7 +21,7 @@ namespace WeißSchwarzDBUpdater
 
         private Selenium mainWebsite;
 
-        private readonly TimeSpan clickDelay = TimeSpan.FromSeconds(5); // In Sec
+        private readonly TimeSpan clickDelay = TimeSpan.FromSeconds(8); // In Sec
 
         private string mainWindowName;
 
@@ -30,10 +31,14 @@ namespace WeißSchwarzDBUpdater
 
         private readonly bool logWithEx = false; // Set true for more detailed Exception Log
 
-        private readonly int instancesOfTasks = 5;
+        private readonly int instancesOfTasks = 1;
 
-        private readonly int beginFromSet = 170 - 1; // (x) - 1 default. x = 1
+        private readonly int beginFromSet = 1 - 1; // (x) - 1 default x = 1
 
+        private readonly int endFromSet = 150;  // (x)
+
+        private readonly bool onlyRange = false; // If true only from begin to range
+ 
         public WSDataCollector(string chromePath, bool headless)
         {
             this.chromePath = chromePath;
@@ -67,10 +72,13 @@ namespace WeißSchwarzDBUpdater
             SemaphoreSlim maxThread = new SemaphoreSlim(instancesOfTasks);
             List<Task> taskListToWait = new();
 
-            // Set to True if new Data are updated in DB
-            bool newData = false;
+            // from range or all sets
+            int range = sets.Count;
+            if (onlyRange)
+                range = endFromSet;
+
             // Load every Set into Task.
-            for (int i = beginFromSet; i < sets.Count; i++)
+            for (int i = beginFromSet; i < range; i++)
             {
                 maxThread.Wait();
                 Log.Info("Start Task for Set " + (i + 1));
@@ -91,7 +99,6 @@ namespace WeißSchwarzDBUpdater
                         // End Task
                         return;
                     }
-                    newData = true;
                     // Start Collection
                     IterateEveryPage(window.driver, (int)index + 1);
                     window.driver.Close();
@@ -107,18 +114,7 @@ namespace WeißSchwarzDBUpdater
             mainWebsite.driver.Close();
             mainWebsite.driver.Dispose();
             // Update DataVersion in DB if new Data was Found
-            if(newData)
-            {
-                DataVersion version = Program.db.DataVersion.FirstOrDefault(x => x.ID == 1);
-                if (version == null)
-                {
-                    Program.db.DataVersion.Add(new DataVersion() { Version = 1 });
-                }
-                else
-                    version.ID += 1;
-                Program.db.SaveChanges();
-                newData = false;
-            }            
+            // 
             Program.db.Dispose();
             Console.WriteLine("Finished :D");
             Console.ReadKey();
@@ -175,7 +171,7 @@ namespace WeißSchwarzDBUpdater
 #endif
                     if (logWithEx) Log.Error(ex.ToString());
                     driver.Navigate().GoToUrl(wsURL);
-                    new Actions(driver).Pause(TimeSpan.FromSeconds(5)).Perform();
+                    new Actions(driver).Pause(TimeSpan.FromMilliseconds(100)).Perform();
 
                 }
             }
@@ -228,8 +224,29 @@ namespace WeißSchwarzDBUpdater
             WSContext wsContext = new WSContext();
             wsContext.Sets.Add(set);
             // Save to DB
-            wsContext.SaveChanges();
+            try
+            {
+                wsContext.SaveChanges();
+                IncreaseVersionNumber();
+            } 
+            catch (Exception ex)
+            {
+                Log.Error("Error on Saving Set to DB.\n" + ex);
+            }
+            
             wsContext.Dispose();
+        }
+
+        private void IncreaseVersionNumber()
+        {
+            DataVersion version = Program.db.DataVersion.FirstOrDefault(x => x.ID == 1);
+            if (version == null)
+            {
+                Program.db.DataVersion.Add(new DataVersion() { Version = 1 });
+            }
+            else
+                version.Version += 1;
+            Program.db.SaveChanges();
         }
 
         private SetType GetSetType(string str)
@@ -294,7 +311,7 @@ namespace WeißSchwarzDBUpdater
                     newWindow.driver.Close();
                     newWindow.driver.Dispose();
                 }));
-                Task.Delay(TimeSpan.FromMilliseconds(10)).Wait();
+                Task.Delay(TimeSpan.FromSeconds(10)).Wait();
                 counter++;
             }
             Task.WaitAll(seleniumInstances.ToArray());
@@ -336,9 +353,21 @@ namespace WeißSchwarzDBUpdater
                     Log.Debug("ImageURL: " + cardImageURL);
 
                     // CardName
-                    string cardName = cardDetail[0].FindElements(By.XPath("td"))[1].Text.Split("\n")[0];
+                    string cardName = string.Empty;
+                    // Figure out if <shadow> Tag exist
+                    try
+                    {
+                        cardName = cardDetail[0].FindElements(By.XPath("td"))[1].FindElement(By.XPath("shadow")).Text.Split("\n")[0];
+                    }
+                    // if no shadow tag do this
+                    catch (Exception)
+                    {
+                        cardName = cardDetail[0].FindElements(By.XPath("td"))[1].Text.Split("\n")[0];
+                    }
+
                     // Remove ASCII CR ("\r")
-                    cardName = cardName.Remove(cardName.IndexOf("\r"), 1);
+                    if(cardName.Contains("\r")) // sometimes no \r exist
+                        cardName = cardName.Remove(cardName.IndexOf("\r"), 1);
                     Log.Debug("CardName: " + cardName);
 #endregion
 
