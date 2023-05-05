@@ -17,9 +17,7 @@ namespace WeißSchwarzDBUpdater
         private readonly string _chromePath;
         private readonly string _chromeDriverPath;
         private string _chromeVersion;
-        private string _chromeDriverVersion;
-        private bool foundNewVersion = false;
-        
+        private string _chromeDriverVersion;        
 
         public ChromeDriverUpdater(string chromeExePath, string chromeDriverFullPath)
         {
