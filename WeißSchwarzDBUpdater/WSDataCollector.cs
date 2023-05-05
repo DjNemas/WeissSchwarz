@@ -25,7 +25,7 @@ namespace WeißSchwarzDBUpdater
 
         private string mainWindowName;
 
-        private readonly string chromePath;
+        private readonly string chromeDriverPath;
 
         private readonly bool headless;
 
@@ -39,20 +39,20 @@ namespace WeißSchwarzDBUpdater
 
         private readonly bool onlyRange = false; // If true only from begin to range
  
-        public WSDataCollector(string chromePath, bool headless)
+        public WSDataCollector(string chromeDriverPath, string chromePath, bool headless)
         {
-            this.chromePath = chromePath;
+            this.chromeDriverPath = chromeDriverPath;
             this.headless = headless;
-            this.mainWebsite = new(chromePath, headless);
+            this.mainWebsite = new(chromeDriverPath, chromePath, headless);
         }
 
         public void StartCollect()
         {
             while(true)
             {
-                mainWebsite.driver.Navigate().GoToUrl(wsURL);
-                mainWindowName = mainWebsite.driver.CurrentWindowHandle;
-                var setLinkElements = SelectSetLinks(mainWebsite.driver);
+                mainWebsite.Driver.Navigate().GoToUrl(wsURL);
+                mainWindowName = mainWebsite.Driver.CurrentWindowHandle;
+                var setLinkElements = SelectSetLinks(mainWebsite.Driver);
                 IterateClickOnSet(setLinkElements);
 
                 // Wait until next Day 0 Hour and redo the collection.
@@ -86,23 +86,23 @@ namespace WeißSchwarzDBUpdater
                 {                    
                     // Open New Window and Load Weiß Schwarz Page
                     Selenium window = CreateNewWindow(headless);
-                    ClickOnXSet(window.driver, (int)index);
+                    ClickOnXSet(window.Driver, (int)index);
                     // Wait for first Card Information Loaded.
-                    IWebElement cardNo = GetFirstCardNumber(window.driver, (int)index);
+                    IWebElement cardNo = GetFirstCardNumber(window.Driver, (int)index);
 
                     // Check if Set Already in DB, if yes close Window and continue with next Set
                     if (CheckCardInDB(cardNo))
                     {
                         Log.Info("First Card found in DB! Set " + sets[(int)index].Text + " already in Database. Continue with next Set.");
-                        window.driver.Close();
-                        window.driver.Dispose();
+                        window.Driver.Close();
+                        window.Driver.Dispose();
                         // End Task
                         return;
                     }
                     // Start Collection
-                    IterateEveryPage(window.driver, (int)index + 1);
-                    window.driver.Close();
-                    window.driver.Dispose();
+                    IterateEveryPage(window.Driver, (int)index + 1);
+                    window.Driver.Close();
+                    window.Driver.Dispose();
 
                     // Some Task Settings
                 }, i, TaskCreationOptions.LongRunning)
@@ -111,8 +111,8 @@ namespace WeißSchwarzDBUpdater
                 Task.Delay(TimeSpan.FromMilliseconds(10)).Wait();
             }
             Task.WaitAll(taskListToWait.ToArray());
-            mainWebsite.driver.Close();
-            mainWebsite.driver.Dispose();
+            mainWebsite.Driver.Close();
+            mainWebsite.Driver.Dispose();
             // Update DataVersion in DB if new Data was Found
             // 
             Program.db.Dispose();
@@ -171,7 +171,7 @@ namespace WeißSchwarzDBUpdater
 #endif
                     if (logWithEx) Log.Error(ex.ToString());
                     driver.Navigate().GoToUrl(wsURL);
-                    new Actions(driver).Pause(TimeSpan.FromMilliseconds(100)).Perform();
+                    new Actions(driver).Pause(clickDelay).Perform();
 
                 }
             }
@@ -304,12 +304,12 @@ namespace WeißSchwarzDBUpdater
                     // Open New Card Window
                     Selenium newWindow = CreateNewWindow(headless);
                     // Load Card URL
-                    newWindow.driver.Navigate().GoToUrl(url);
+                    newWindow.Driver.Navigate().GoToUrl(url);
                     // Collect Card Data
-                    CollectCardData(newWindow.driver, cards, currentSetNumber, url);
+                    CollectCardData(newWindow.Driver, cards, currentSetNumber, url);
                     // Close Card Window
-                    newWindow.driver.Close();
-                    newWindow.driver.Dispose();
+                    newWindow.Driver.Close();
+                    newWindow.Driver.Dispose();
                 }));
                 Task.Delay(TimeSpan.FromSeconds(10)).Wait();
                 counter++;
@@ -319,7 +319,7 @@ namespace WeißSchwarzDBUpdater
 
         private Selenium CreateNewWindow(bool headless)
         {
-            var service = ChromeDriverService.CreateDefaultService(chromePath);
+            var service = ChromeDriverService.CreateDefaultService(chromeDriverPath);
             // Don't use Console
             service.HideCommandPromptWindow = true;
             return new Selenium(service, headless);

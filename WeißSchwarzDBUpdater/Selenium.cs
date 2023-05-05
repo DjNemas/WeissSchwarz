@@ -10,42 +10,43 @@ namespace WeißSchwarzDBUpdater
 {
     internal class Selenium
     {
-        private readonly string binaryPath = @"C:\Program Files\Google\Chrome Beta\Application\chrome.exe";
-        private readonly string chromePath;
-        private bool headless;
+        private readonly string _chromePath;
+        private readonly string _chromeDriverPath;
+        private bool _headless;
 
-        public ChromeDriver driver { get; }
-        private ChromeOptions options;
+        public ChromeDriver Driver { get; }
+        private ChromeOptions _options;
 
-        public Selenium(string chromePath, bool headless)
+        public Selenium(string chromeDriverPath, string chromePath, bool headless)
         {
-            this.chromePath = chromePath;
-            this.headless = headless;
+            _chromeDriverPath = chromeDriverPath;
+            _chromePath = chromePath;
+            _headless = headless;
 
-            this.options = new ChromeOptions();
+            _options = new ChromeOptions();
+            _options.BinaryLocation = _chromePath;
 
-            if (this.headless)
+            if (_headless)
             {
-                this.options.BinaryLocation = binaryPath;
-                this.options.AddArguments(new List<string>() { "headless", "disable-gpu" });
+                _options.AddArguments(new List<string>() { "headless", "disable-gpu" });
                 //this.options.AddArguments(new List<string>() { "headless" });
             }
 
-            this.driver = new ChromeDriver(this.chromePath, options);
+            Driver = new ChromeDriver(_chromeDriverPath, _options);
         }
 
         public Selenium(ChromeDriverService service, bool headless)
         {
-            this.options = new ChromeOptions();
-            this.headless = headless;
+            _options = new ChromeOptions();
+            _headless = headless;
 
-            if (this.headless)
+            if (_headless)
             {
-                this.options.BinaryLocation = binaryPath;
-                this.options.AddArguments(new List<string>() { "headless", "disable-gpu" });
+                _options.BinaryLocation = _chromePath;
+                _options.AddArguments(new List<string>() { "headless", "disable-gpu" });
                 //this.options.AddArguments(new List<string>() { "headless" });
             }
-            this.driver = new ChromeDriver(service, options);
+            this.Driver = new ChromeDriver(service, _options);
         }
     }
 }
