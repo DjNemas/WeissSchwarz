@@ -1,4 +1,5 @@
-﻿using OpenQA.Selenium;
+﻿using Microsoft.EntityFrameworkCore.Metadata;
+using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
 using System;
 using System.Collections.Generic;
@@ -28,25 +29,11 @@ namespace WeißSchwarzDBUpdater
 
             if (_headless)
             {
-                _options.AddArguments(new List<string>() { "headless", "disable-gpu" });
+                _options.AddArguments(new List<string>() { "--headless", "--disable-gpu", "--disable-logging", "--log-level=3" });
                 //this.options.AddArguments(new List<string>() { "headless" });
             }
 
             Driver = new ChromeDriver(_chromeDriverPath, _options);
-        }
-
-        public Selenium(ChromeDriverService service, bool headless)
-        {
-            _options = new ChromeOptions();
-            _headless = headless;
-
-            if (_headless)
-            {
-                _options.BinaryLocation = _chromePath;
-                _options.AddArguments(new List<string>() { "headless", "disable-gpu" });
-                //this.options.AddArguments(new List<string>() { "headless" });
-            }
-            this.Driver = new ChromeDriver(service, _options);
         }
     }
 }

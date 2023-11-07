@@ -46,7 +46,10 @@ namespace WeißSchwarzSharedClasses
             lock (logLock)
             {
                 string msgString = DateTime.Now.ToString(formatDate) + " [INFO] " + msg;
+
+                Console.ForegroundColor = ConsoleColor.Cyan;
                 Console.WriteLine(msgString);
+                Console.ResetColor();
                 LogToFile(msgString, toFile);
             }
         }

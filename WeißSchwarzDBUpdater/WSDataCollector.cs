@@ -21,11 +21,13 @@ namespace WeißSchwarzDBUpdater
 
         private Selenium mainWebsite;
 
-        private readonly TimeSpan clickDelay = TimeSpan.FromSeconds(8); // In Sec
+        private readonly TimeSpan clickDelay = TimeSpan.FromSeconds(10); // In Sec
 
         private string mainWindowName;
 
         private readonly string chromeDriverPath;
+
+        private readonly string chromePath;
 
         private readonly bool headless;
 
@@ -42,6 +44,7 @@ namespace WeißSchwarzDBUpdater
         public WSDataCollector(string chromeDriverPath, string chromePath, bool headless)
         {
             this.chromeDriverPath = chromeDriverPath;
+            this.chromePath = chromePath;
             this.headless = headless;
             this.mainWebsite = new(chromeDriverPath, chromePath, headless);
         }
@@ -54,13 +57,12 @@ namespace WeißSchwarzDBUpdater
                 mainWindowName = mainWebsite.Driver.CurrentWindowHandle;
                 var setLinkElements = SelectSetLinks(mainWebsite.Driver);
                 IterateClickOnSet(setLinkElements);
-
+                Console.ReadKey();
                 // Wait until next Day 0 Hour and redo the collection.
-                DateTime nextDay = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, DateTime.UtcNow.Day, 0, 0, 0).AddDays(1);
-                TimeSpan waitUntilNextDay = nextDay.Subtract(DateTime.UtcNow);
-                Task.Delay(waitUntilNextDay).Wait();
+                //DateTime nextDay = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, DateTime.UtcNow.Day, 0, 0, 0).AddDays(1);
+                //TimeSpan waitUntilNextDay = nextDay.Subtract(DateTime.UtcNow);
+                //Task.Delay(waitUntilNextDay).Wait();
             }
-            
         }
 
         private void IterateClickOnSet(ReadOnlyCollection<IWebElement> sets)
@@ -117,7 +119,6 @@ namespace WeißSchwarzDBUpdater
             // 
             Program.db.Dispose();
             Console.WriteLine("Finished :D");
-            Console.ReadKey();
         }
 
         private IWebElement GetFirstCardNumber(ChromeDriver driver, int setIndex)
@@ -148,7 +149,7 @@ namespace WeißSchwarzDBUpdater
             // Select all sets for this Driver again and click on Set
             var sets = SelectSetLinks(driver);
             // Click on Set and Wait 2 sec to load new Dom
-            new Actions(driver).Click(sets[setIndex]).Pause(TimeSpan.FromSeconds(5)).Perform();
+            new Actions(driver).Click(sets[setIndex]).Pause(TimeSpan.FromSeconds(2)).Perform();
         }
 
         private void AcceptCookies(ChromeDriver driver)
@@ -158,8 +159,12 @@ namespace WeißSchwarzDBUpdater
             {
                 try
                 {
-                    driver.FindElement(By.Id("CybotCookiebotDialogBodyLevelButtonAccept")).Click();
+                    driver.FindElement(By.Id("CybotCookiebotDialogBodyButtonDecline")).Click();
                     acceptedCookie = true;
+                }
+                catch (NoSuchElementException)
+                {
+                    break;
                 }
                 catch (Exception ex)
                 {
@@ -171,8 +176,7 @@ namespace WeißSchwarzDBUpdater
 #endif
                     if (logWithEx) Log.Error(ex.ToString());
                     driver.Navigate().GoToUrl(wsURL);
-                    new Actions(driver).Pause(clickDelay).Perform();
-
+                    new Actions(driver).Pause(TimeSpan.FromSeconds(5)).Perform();
                 }
             }
             while (!acceptedCookie);
@@ -319,10 +323,9 @@ namespace WeißSchwarzDBUpdater
 
         private Selenium CreateNewWindow(bool headless)
         {
-            var service = ChromeDriverService.CreateDefaultService(chromeDriverPath);
-            // Don't use Console
-            service.HideCommandPromptWindow = true;
-            return new Selenium(service, headless);
+            
+            
+            return new Selenium(this.chromeDriverPath, this.chromePath, headless);
         }
 
         private void CollectCardData(ChromeDriver driver, Dictionary<int, List<Card>> cards, int currentSetNumber, string cardURL)
@@ -735,7 +738,10 @@ namespace WeißSchwarzDBUpdater
         {
             ReadOnlyCollection<IWebElement> pages = driver.FindElement(By.Id("expansionDetail")).FindElements(By.XPath("p/a"));
             // Select second last Page
-            return Convert.ToInt32(pages[pages.Count - 2].Text);
+            if (pages.Count >= 2)
+                return Convert.ToInt32(pages[pages.Count - 2].Text);
+            else
+                return 1;
         }
 
         private List<string> GetCurrentPageCardsLinks(ReadOnlyCollection<IWebElement> tabelA)
@@ -776,6 +782,7 @@ namespace WeißSchwarzDBUpdater
                     Log.Error("Bad Getway on Start URL");
                     if (logWithEx) Log.Error(ex.ToString());
                     driver.Navigate().GoToUrl(wsURL);
+                    new Actions(driver).Pause(TimeSpan.FromSeconds(10)).Perform();
                     AcceptCookies(driver);
                 }
 

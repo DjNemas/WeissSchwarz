@@ -11,19 +11,19 @@ namespace WeißSchwarzDBUpdater
     {
         internal static WSContext db;
         private static WSDataCollector collector;
-        private static readonly string chromeDriverPath = Path.Combine(Environment.CurrentDirectory, "chromedriver", "chromedriver.exe");
-        private static readonly string chromeExePath = "C:\\Program Files\\Google\\Chrome Beta\\Application\\chrome.exe";
+        private static readonly DirectoryInfo chromeDriverFolder = new(Path.Combine(Environment.CurrentDirectory, "chromedriver"));
+        private static readonly FileInfo chromeExePath = new(@"C:\Program Files\Google\Chrome Beta\Application\chrome.exe");
         static void Main(string[] args)
         {
-            ChromeDriverUpdater updater = new(chromeExePath, chromeDriverPath);
-            updater.CheckUpdate();
+            ChromeDriverUpdater updater = new(chromeExePath, chromeDriverFolder);
+            updater.CheckUpdate().Wait();
 
             // Init DB
             if (ConnectDB())
             {
                 Log.Debug("DB Connected");
                 // Start Collect
-                collector = new(chromeDriverPath, chromeExePath, true);
+                collector = new(chromeDriverFolder.FullName, chromeExePath.FullName, true);
                 collector.StartCollect();
             }            
             Console.ReadKey();

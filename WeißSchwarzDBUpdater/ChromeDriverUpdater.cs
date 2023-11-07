@@ -2,9 +2,14 @@
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Runtime.CompilerServices;
+using System.Text.Json;
+using System.Threading.Tasks;
 using System.Xml;
+using WeißSchwarzDBUpdater.Models;
 using WeißSchwarzSharedClasses;
 
 namespace WeißSchwarzDBUpdater
@@ -12,40 +17,41 @@ namespace WeißSchwarzDBUpdater
     public class ChromeDriverUpdater
     {
         private readonly static string _chromeDriverInfoTxtFilePath = Path.Combine(Environment.CurrentDirectory, "chromedriver", "version.txt");
-        
 
-        private readonly string _chromePath;
-        private readonly string _chromeDriverPath;
+        private readonly FileInfo _chromeExePath;
+        private readonly DirectoryInfo _chromeDriverDir;
+        private readonly FileInfo _chromeDriverFile;
         private string _chromeVersion;
         private string _chromeDriverVersion;        
 
-        public ChromeDriverUpdater(string chromeExePath, string chromeDriverFullPath)
+        public ChromeDriverUpdater(FileInfo chromeExePath, DirectoryInfo chromeDriverDir)
         {
-            _chromePath = chromeExePath;
-            _chromeDriverPath = chromeDriverFullPath;
-            FileInfo fileInfo = new FileInfo(chromeDriverFullPath);
-            if(!Directory.Exists(fileInfo.DirectoryName))
-                Directory.CreateDirectory(fileInfo.DirectoryName);
+            _chromeExePath = chromeExePath;
+            _chromeDriverDir = chromeDriverDir;
+            _chromeDriverFile = new FileInfo(Path.Combine(chromeDriverDir.FullName, "chromedriver.exe"));
+
+            if (!chromeDriverDir.Exists)
+                Directory.CreateDirectory(chromeDriverDir.FullName);
             if (!File.Exists(_chromeDriverInfoTxtFilePath))
             {
                 File.WriteAllText(_chromeDriverInfoTxtFilePath, "0.0.0.0");
             }
         }
-        public void CheckUpdate()
+        public async Task CheckUpdate()
         {
             GetChromeExeVersion();
             GetChromeDriverVersion();
             if (_chromeVersion != _chromeDriverVersion)
             {
                 Log.Info("New ChromeDriver Version Available.", true);
-                DownloadNewVersion();
+                await DownloadNewVersion();
             }
                 
         }
 
         private void GetChromeExeVersion()
         {
-            FileVersionInfo versionInfo = FileVersionInfo.GetVersionInfo(_chromePath);
+            FileVersionInfo versionInfo = FileVersionInfo.GetVersionInfo(_chromeExePath.FullName);
             _chromeVersion = versionInfo.FileVersion;
         }
         private void GetChromeDriverVersion()
@@ -53,47 +59,39 @@ namespace WeißSchwarzDBUpdater
             _chromeDriverVersion = File.ReadAllText(_chromeDriverInfoTxtFilePath);
         }
 
-        private async void DownloadNewVersion()
+        private async Task DownloadNewVersion()
         {
             Log.Info("Start Download", true);
-            if (File.Exists(_chromeDriverPath))
-                File.Delete(_chromeDriverPath);
+            if (_chromeDriverFile.Exists)
+                _chromeDriverFile.Delete();
 
             using (HttpClient client = new())
             {
-                //string versionCut = _chromeVersion.Substring(0, _chromeVersion.LastIndexOf("."));
-                StringContent content = new("application/xml");
-                string xml = await client.GetStringAsync($"https://chromedriver.storage.googleapis.com/?delimiter=/&prefix={_chromeVersion}/");
+                string jsonString = await client.GetStringAsync($"https://googlechromelabs.github.io/chrome-for-testing/known-good-versions-with-downloads.json");
+                ChromeDriverResponse response = JsonSerializer.Deserialize<ChromeDriverResponse>(jsonString);
 
-                string windowsVersionKey = GetWindowsVersionKey(xml);
+                string downloadURL = response.Versions
+                    .FirstOrDefault(x => x.Version == _chromeVersion && x.Downloads.Chromedriver is not null).Downloads.Chromedriver
+                    .FirstOrDefault(x => x.Platform == Platform.Win64).Url;
 
-                byte[] dataZip = await client.GetByteArrayAsync($"https://chromedriver.storage.googleapis.com/{windowsVersionKey}");
+                byte[] dataZip = await client.GetByteArrayAsync(downloadURL);
 
-                FileInfo dir = new FileInfo(_chromeDriverPath);
-                string zipPath = Path.Combine(dir.DirectoryName, "chromedriver.zip");
+                string zipPath = Path.Combine(_chromeDriverDir.FullName, "chromedriver.zip");
                 File.WriteAllBytes(zipPath, dataZip);
 
-                ZipFile.ExtractToDirectory(zipPath, dir.DirectoryName, true);
+                ZipFile.ExtractToDirectory(zipPath, _chromeDriverDir.FullName, true);
+                FileInfo chromeDriver = _chromeDriverDir.GetFiles("chromedriver.exe", SearchOption.AllDirectories).FirstOrDefault();
+
+                File.Copy(chromeDriver.FullName, _chromeDriverFile.FullName);
+
+                Directory.Delete(chromeDriver.Directory.FullName, true);
                 File.Delete(zipPath);
 
                 await Console.Out.WriteLineAsync();
-                
+
             }
             File.WriteAllText(_chromeDriverInfoTxtFilePath, _chromeVersion);
             Log.Info("Download Done", true);
-        }
-
-        private string GetWindowsVersionKey(string xml)
-        {
-            XmlDocument doc = new XmlDocument();
-            doc.LoadXml(xml);
-            XmlNodeList keys = doc.GetElementsByTagName("Key");
-            foreach (XmlNode keyNode in keys)
-            {
-                if(keyNode.InnerText.Contains("win32.zip"))
-                    return keyNode.InnerText;
-            }
-            return string.Empty;
         }
     }
 }
