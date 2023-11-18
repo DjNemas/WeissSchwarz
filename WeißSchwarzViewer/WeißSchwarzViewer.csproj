@@ -2,10 +2,18 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net6.0-windows</TargetFramework>
+    <TargetFramework>net7.0-windows</TargetFramework>
     <Nullable>enable</Nullable>
     <UseWPF>true</UseWPF>
     <ApplicationIcon>ws.ico</ApplicationIcon>
+    <FileVersion>1.5</FileVersion>
+    <PackageProjectUrl>https://github.com/DjNemas/WeissSchwarz</PackageProjectUrl>
+    <Copyright>djnemas</Copyright>
+    <Description>With this Viewer, you can see all Weiß Schwarz Sets and Cards.
+It also has some additional functionality, like dowloading all images or text of cards.</Description>
+    <Title>Weiß Schwarz Viewer</Title>
+    <SignAssembly>False</SignAssembly>
+    <AssemblyOriginatorKeyFile>C:\Users\denis\Desktop\OBS Overlay\Hatsune Miku Overlay\Icon Transparent.ico</AssemblyOriginatorKeyFile>
   </PropertyGroup>
 
   <ItemGroup>

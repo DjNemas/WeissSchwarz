@@ -1,35 +1,24 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
-using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 using WeißSchwarzSharedClasses;
 using WeißSchwarzSharedClasses.Models;
 using WeißSchwarzViewer.DB;
 using WeißSchwarzViewer.UI;
 using static WeißSchwarzViewer.DB.DatabaseContext;
 using Microsoft.WindowsAPICodePack.Dialogs;
-using WeißSchwarzViewer.WPFHelper;
-using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
-using System.Windows.Media.Animation;
-using MySqlX.XDevAPI;
-using Google.Protobuf.Collections;
+using System.Runtime.InteropServices;
 
 namespace WeißSchwarzViewer
 {
@@ -38,7 +27,7 @@ namespace WeißSchwarzViewer
     /// </summary>
     public partial class MainWindow : Window
     {
-        private readonly float _AppVersion = 1.4f;
+        private readonly float _AppVersion = 1.5f;
 #if DEBUG
         [DllImport("Kernel32")]
         private static extern void AllocConsole();
@@ -48,6 +37,14 @@ namespace WeißSchwarzViewer
         private bool stopDownloading = false;
 
         private static object locker = new();
+
+        private static TimeSpan _searchWaitTime = new();
+
+        private static Task? _searchTask;
+
+        private static DateTime _lastUserInputTime = DateTime.Now;
+
+        private static readonly TimeSpan _timeToWait = TimeSpan.FromMilliseconds(300);
 
         public MainWindow()
         {
@@ -64,7 +61,7 @@ namespace WeißSchwarzViewer
 
             // Now the real Magic happens! Doing my own stuff. ヽ(*⌒▽⌒*)ﾉ
             // Load DB Data
-            LoadDataFromDB();
+            LoadSetDataFromDB().Wait();
             // Let the Windows appere in the middle of Screen.
             CenterWindowOnScreen();
 
@@ -85,19 +82,36 @@ namespace WeißSchwarzViewer
             DatabaseContext.DB.Database.EnsureCreated();
             Log.Info("DB Created or Loaded");
         }
-        private void LoadDataFromDB()
+        private async Task LoadSetDataFromDB(string searchTitleString = "")
         {
             // Clear Obs
             ObsLists.Sets.Clear();
 
             DatabaseContext db = new();
+            List<Set> sets = new();
 
-            // Sort 
-            var sets = db.Sets
+            // Load All
+            if(searchTitleString == string.Empty)
+            {
+                sets = await db.Sets
                 .Include(x => x.Cards).ThenInclude(x => x.Traits)
-                .Include(x => x.Cards).ThenInclude(x => x.Triggers).ToList().OrderBy(x => x.Name);
+                .Include(x => x.Cards).ThenInclude(x => x.Triggers)
+                .ToListAsync();
+            }
+            else // Load By Name Filter
+            {
+                sets = sets = await db.Sets
+                .Include(x => x.Cards).ThenInclude(x => x.Traits)
+                .Include(x => x.Cards).ThenInclude(x => x.Triggers)
+                .Where(s => s.Name.ToLower().Contains(searchTitleString.ToLower()))
+                .ToListAsync();
+            }
+
+            // Sort            
+            var orderSet = sets.OrderBy(x => x.Name);
+
             // Fill Obs
-            foreach (var item in sets)
+            foreach (var item in orderSet)
             {
                 ObsLists.Sets.Add(item);
             }
@@ -232,7 +246,7 @@ namespace WeißSchwarzViewer
                     await db.SaveChangesAsync();
 
                     // Load All New Data From DB and Fill UI
-                    LoadDataFromDB();
+                    LoadSetDataFromDB();
 
                     // Change UI Lable back
                     lblProcess.Content = "Done";
@@ -824,6 +838,42 @@ namespace WeißSchwarzViewer
                 return false;
             else
                 return null;
+        }
+
+        private async void tbSearchFieldSet_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            var textBox = sender as TextBox;
+
+            if (textBox is null)
+                return;
+
+            if(_searchTask is null || _searchTask.IsCompleted)
+                _searchTask = Task.Run(() => StartSearchFieldWaitTimer());                
+
+            if (DateTime.Now.Subtract(_lastUserInputTime) < _timeToWait)
+            {
+                _lastUserInputTime = DateTime.Now;
+                _searchWaitTime = new();
+                return;
+            }
+        }
+
+        private async Task StartSearchFieldWaitTimer()
+        {
+            _searchWaitTime = new();
+            while (_searchWaitTime < _timeToWait)
+            {
+                _searchWaitTime = _searchWaitTime.Add(TimeSpan.FromMilliseconds(5));
+                await Task.Delay(TimeSpan.FromMilliseconds(5));
+            }
+
+            await Application.Current.Dispatcher.InvokeAsync(async () =>
+            {
+                if (tbSearchFieldSet.Text == string.Empty)
+                    await LoadSetDataFromDB();
+                else
+                    await LoadSetDataFromDB(tbSearchFieldSet.Text);
+            });
         }
     }
 }

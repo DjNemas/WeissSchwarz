@@ -40,7 +40,8 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
-            <RowDefinition/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
@@ -61,16 +62,27 @@
 
         <!--#endregion-->
 
-        <!--#region Content-->
+        <!--#region User Tools-->
         <Grid Grid.Row="1">
+            <Grid.RowDefinitions>
+                <RowDefinition />
+                <RowDefinition />
+            </Grid.RowDefinitions>
+            
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
 
+            <Grid.Resources>
+                <Style TargetType="DockPanel">
+                    <Setter Property="Margin" Value="2 0 17 5" />
+                </Style>
+            </Grid.Resources>
+            
             <!--#region Releases/Sets-->
-            <Grid Grid.Column="0">
+            <Grid Grid.Column="0" Grid.Row="0">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
@@ -88,28 +100,20 @@
                     <Button x:Name="btnDowloadImages" Content="Download" Margin="10 2 2 2" Padding="5 0" Click="btnDowloadImages_Click"/>
                     <Button x:Name="btnStop" Content="Stop" Margin="2" Padding="5 0" Click="Stop_Click" IsEnabled="False"/>
                 </StackPanel>
-                <ListBox Grid.Row="2" Name="lbSets" Margin="5 0 0 0" SelectionChanged="lbSets_SelectionChanged" Background="DarkGray">
-                    <!--<ListBox.ItemContainerStyle>
-                        <Style TargetType="{x:Type ListBoxItem}">
-                            <Style.Triggers>
-                                <Trigger Property="IsKeyboardFocusWithin" Value="True">
-                                    <Setter Property="" Value="True" />
-                                </Trigger>
-                            </Style.Triggers>
-                        </Style>
-                    </ListBox.ItemContainerStyle>-->
-                    <ListBox.ItemTemplate>
-                        <DataTemplate>
-                            <StackPanel Margin="0 0 0 5">
-                                <TextBox Grid.Column="1" Width="300" Text="{Binding Name, StringFormat=Name: {0}}" TextWrapping="Wrap" Style="{DynamicResource lbDesign}"/>
-                                <TextBox Grid.Column="0" Text="{Binding Type, StringFormat=SetType: {0}}" Margin="0 0 10 0" Style="{DynamicResource lbDesign}"/>
-                                <TextBox Grid.Column="1" Text="{Binding NumberOfCards, StringFormat=Cards: {0}}" Style="{DynamicResource lbDesign}"/>
-                            </StackPanel>
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                </ListBox>
+                
+            </Grid>
+            <Grid Grid.Row="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition />
+                    <RowDefinition />
+                </Grid.RowDefinitions>
+                <DockPanel Grid.Row="0">
+                    <Label Content="Search Set: "/>
+                    <TextBox x:Name="tbSearchFieldSet" TextChanged="tbSearchFieldSet_TextChanged" />
+                </DockPanel>
             </Grid>
             <!--#endregion-->
+            
             <!--#region Cards-->
             <Grid Grid.Column="1">
                 <Grid.RowDefinitions>
@@ -138,107 +142,143 @@
                         <ComboBox Name="cbSorterAorD" SelectionChanged="cbSorterAorD_SelectionChanged" SelectedIndex="0" IsEnabled="False" Margin="0 2 0 2"/>                    
                     </StackPanel>
                 </Grid>
-                <ListBox Grid.Row="2" Name="lbCards" Margin="5 0 0 0" SelectionChanged="lbCards_SelectionChanged" Background="DarkGray">
-                    <ListBox.ItemContainerStyle>
-                        <Style TargetType="{x:Type ListBoxItem}">
-                            <Style.Triggers>
-                                <Trigger Property="IsKeyboardFocusWithin" Value="True">
-                                    <Setter Property="IsSelected" Value="True" />
-                                </Trigger>
-                            </Style.Triggers>
-                        </Style>
-                    </ListBox.ItemContainerStyle>
-                    <ListBox.Resources>
-                        <helper:ActualWidthCorrector x:Key="ActualWidthCorrector"/>
-                    </ListBox.Resources>
-                    <ListBox.ItemTemplate>
-                        <DataTemplate>
-                            <StackPanel Name="spCards" Margin="0 0 0 10">
-                                <TextBox Text="{Binding LongID, StringFormat={}ID: {0}}" Style="{DynamicResource lbDesign}"/>
-                                <TextBox Text="{Binding Name, StringFormat={}Name: {0}}" Style="{DynamicResource lbDesign}"/>
-                                <TextBox Text="{Binding Rarity, StringFormat={}Rarity: {0}}" Style="{DynamicResource lbDesign}"/>
-                                <TextBox Text="{Binding Color, StringFormat={}Color: {0}}" Style="{DynamicResource lbDesign}"/>
-                                <TextBox Text="{Binding Type, StringFormat={}Type: {0}}" Style="{DynamicResource lbDesign}"/>
-                                <TextBox Text="{Binding Level, StringFormat={}Level: {0}}" Style="{DynamicResource lbDesign}"/>
-                                <TextBox Text="{Binding Cost, StringFormat={}Cost: {0}}" Style="{DynamicResource lbDesign}"/>
-                                <TextBox Text="{Binding Power, StringFormat={}Power: {0}}" Style="{DynamicResource lbDesign}"/>
-                                <TextBox Text="{Binding Soul, StringFormat={}Soul: {0}}" Style="{DynamicResource lbDesign}"/>
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <TextBox Width="{Binding ActualWidth, ElementName=tbIllustration}" Grid.Column="0" Text="Triggers:" Style="{DynamicResource lbDesign}"/>
-                                    <ListBox Grid.Column="1" ItemContainerStyle="{DynamicResource _ListBoxItemStyle}" ItemsSource="{Binding Triggers}" BorderThickness="0" Background="Transparent">
-                                        <ListBox.ItemsPanel>
-                                            <ItemsPanelTemplate>
-                                                <StackPanel Orientation="Horizontal"></StackPanel>
-                                            </ItemsPanelTemplate>
-                                        </ListBox.ItemsPanel>
-                                        <ListBox.ItemTemplate>
-                                            <DataTemplate>
-                                                <TextBox Margin="0 0 5 0" Text="{Binding TriggerTypeUI}" Style="{DynamicResource lbDesign}"/>
-                                            </DataTemplate>
-                                        </ListBox.ItemTemplate>
-                                    </ListBox>
-                                </Grid>
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <TextBox Width="{Binding ActualWidth, ElementName=tbIllustration}" Grid.Column="0" Text="Traits:" Style="{DynamicResource lbDesign}"/>
-                                    <ListBox Grid.Column="1" ItemContainerStyle="{DynamicResource _ListBoxItemStyle}" ItemsSource="{Binding Traits}" BorderThickness="0" Background="Transparent">
-                                        
-                                        <ListBox.ItemsPanel>
-                                            <ItemsPanelTemplate>
-                                                <StackPanel Orientation="Horizontal"></StackPanel>
-                                            </ItemsPanelTemplate>
-                                        </ListBox.ItemsPanel>
-                                        <ListBox.ItemTemplate>
-                                            <DataTemplate>
-                                                <TextBox Margin="0 0 5 0" Text="{Binding Name}" Style="{DynamicResource lbDesign}"/>
-                                            </DataTemplate>
-                                        </ListBox.ItemTemplate>
-                                    </ListBox>
-                                </Grid>                                
-                                <Grid>
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition/>
-                                        <RowDefinition/>
-                                        <RowDefinition/>
-                                    </Grid.RowDefinitions>
-                                    <StackPanel Grid.Row="0" Orientation="Horizontal">
-                                        <TextBox Text="Skill:" Width="{Binding ActualWidth, ElementName=tbIllustration}" Grid.Row="0" Grid.Column="0" Style="{DynamicResource lbDesign}"/>
-                                        <TextBox Grid.Row="0" Margin="2 0 0 0" Text="{Binding SkillText, StringFormat={}{0}}" TextWrapping="Wrap" Width="{Binding ActualWidth, ElementName=lbCards, Converter={StaticResource ActualWidthCorrector}, ConverterParameter=87}" Style="{DynamicResource lbDesign}"/>                                        
-                                    </StackPanel>
-                                    <StackPanel Grid.Row="1" Orientation="Horizontal">
-                                        <TextBox Text="Falvor:" Width="{Binding ActualWidth, ElementName=tbIllustration}" Grid.Row="1" Style="{DynamicResource lbDesign}"/>
-                                        <TextBox Grid.Row="1" Margin="2 0 0 0" Text="{Binding FalvorText, StringFormat={}{0}}" TextWrapping="Wrap" Width="{Binding ActualWidth, ElementName=lbCards, Converter={StaticResource ActualWidthCorrector}, ConverterParameter=87}" Style="{DynamicResource lbDesign}"/>
-                                    </StackPanel>
-                                    <StackPanel Grid.Row="2" Orientation="Horizontal">
-                                        <TextBox Text="Illustration:" Name="tbIllustration" Grid.Row="2" Style="{DynamicResource lbDesign}"/>
-                                        <TextBox Grid.Row="2" Margin="2 0 0 0" Text="{Binding IllustrationText, StringFormat={}{0}}" TextWrapping="Wrap" Width="{Binding ActualWidth, ElementName=lbCards, Converter={StaticResource ActualWidthCorrector}, ConverterParameter=87}" Style="{DynamicResource lbDesign}"/>
-                                    </StackPanel>
-                                </Grid>
-                            </StackPanel>
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                    
-                </ListBox>
             </Grid>
             <!--#endregion-->
+            
             <!--#region Image-->
+            <Label Grid.Column="2" Content="Image" HorizontalContentAlignment="Center"/>
+            
+            <!--#endregion-->
+            
+        </Grid>
+        <!--#endregion-->
+
+        <!--#region List Boxes and Image-->
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <ListBox Grid.Column="0" Name="lbSets" Margin="5 0 0 0" SelectionChanged="lbSets_SelectionChanged" Background="DarkGray">
+                <!--<ListBox.ItemContainerStyle>
+                    <Style TargetType="{x:Type ListBoxItem}">
+                        <Style.Triggers>
+                            <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                                <Setter Property="" Value="True" />
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </ListBox.ItemContainerStyle>-->
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel Margin="0 0 0 5">
+                            <TextBox Grid.Column="1" Width="300" Text="{Binding Name, StringFormat=Name: {0}}" TextWrapping="Wrap" Style="{DynamicResource lbDesign}"/>
+                            <TextBox Grid.Column="0" Text="{Binding Type, StringFormat=SetType: {0}}" Margin="0 0 10 0" Style="{DynamicResource lbDesign}"/>
+                            <TextBox Grid.Column="1" Text="{Binding NumberOfCards, StringFormat=Cards: {0}}" Style="{DynamicResource lbDesign}"/>
+                        </StackPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+
+            <ListBox Grid.Column="1" Name="lbCards" Margin="5 0 0 0" SelectionChanged="lbCards_SelectionChanged" Background="DarkGray">
+                <ListBox.ItemContainerStyle>
+                    <Style TargetType="{x:Type ListBoxItem}">
+                        <Style.Triggers>
+                            <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                                <Setter Property="IsSelected" Value="True" />
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </ListBox.ItemContainerStyle>
+                <ListBox.Resources>
+                    <helper:ActualWidthCorrector x:Key="ActualWidthCorrector"/>
+                </ListBox.Resources>
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel Name="spCards" Margin="0 0 0 10">
+                            <TextBox Text="{Binding LongID, StringFormat={}ID: {0}}" Style="{DynamicResource lbDesign}"/>
+                            <TextBox Text="{Binding Name, StringFormat={}Name: {0}}" Style="{DynamicResource lbDesign}"/>
+                            <TextBox Text="{Binding Rarity, StringFormat={}Rarity: {0}}" Style="{DynamicResource lbDesign}"/>
+                            <TextBox Text="{Binding Color, StringFormat={}Color: {0}}" Style="{DynamicResource lbDesign}"/>
+                            <TextBox Text="{Binding Type, StringFormat={}Type: {0}}" Style="{DynamicResource lbDesign}"/>
+                            <TextBox Text="{Binding Level, StringFormat={}Level: {0}}" Style="{DynamicResource lbDesign}"/>
+                            <TextBox Text="{Binding Cost, StringFormat={}Cost: {0}}" Style="{DynamicResource lbDesign}"/>
+                            <TextBox Text="{Binding Power, StringFormat={}Power: {0}}" Style="{DynamicResource lbDesign}"/>
+                            <TextBox Text="{Binding Soul, StringFormat={}Soul: {0}}" Style="{DynamicResource lbDesign}"/>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBox Width="{Binding ActualWidth, ElementName=tbIllustration}" Grid.Column="0" Text="Triggers:" Style="{DynamicResource lbDesign}"/>
+                                <ListBox Grid.Column="1" ItemContainerStyle="{DynamicResource _ListBoxItemStyle}" ItemsSource="{Binding Triggers}" BorderThickness="0" Background="Transparent">
+                                    <ListBox.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <StackPanel Orientation="Horizontal"></StackPanel>
+                                        </ItemsPanelTemplate>
+                                    </ListBox.ItemsPanel>
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBox Margin="0 0 5 0" Text="{Binding TriggerTypeUI}" Style="{DynamicResource lbDesign}"/>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                            </Grid>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBox Width="{Binding ActualWidth, ElementName=tbIllustration}" Grid.Column="0" Text="Traits:" Style="{DynamicResource lbDesign}"/>
+                                <ListBox Grid.Column="1" ItemContainerStyle="{DynamicResource _ListBoxItemStyle}" ItemsSource="{Binding Traits}" BorderThickness="0" Background="Transparent">
+
+                                    <ListBox.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <StackPanel Orientation="Horizontal"></StackPanel>
+                                        </ItemsPanelTemplate>
+                                    </ListBox.ItemsPanel>
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBox Margin="0 0 5 0" Text="{Binding Name}" Style="{DynamicResource lbDesign}"/>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                            </Grid>
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition/>
+                                    <RowDefinition/>
+                                    <RowDefinition/>
+                                </Grid.RowDefinitions>
+                                <StackPanel Grid.Row="0" Orientation="Horizontal">
+                                    <TextBox Text="Skill:" Width="{Binding ActualWidth, ElementName=tbIllustration}" Grid.Row="0" Grid.Column="0" Style="{DynamicResource lbDesign}"/>
+                                    <TextBox Grid.Row="0" Margin="2 0 0 0" Text="{Binding SkillText, StringFormat={}{0}}" TextWrapping="Wrap" Width="{Binding ActualWidth, ElementName=lbCards, Converter={StaticResource ActualWidthCorrector}, ConverterParameter=87}" Style="{DynamicResource lbDesign}"/>
+                                </StackPanel>
+                                <StackPanel Grid.Row="1" Orientation="Horizontal">
+                                    <TextBox Text="Falvor:" Width="{Binding ActualWidth, ElementName=tbIllustration}" Grid.Row="1" Style="{DynamicResource lbDesign}"/>
+                                    <TextBox Grid.Row="1" Margin="2 0 0 0" Text="{Binding FalvorText, StringFormat={}{0}}" TextWrapping="Wrap" Width="{Binding ActualWidth, ElementName=lbCards, Converter={StaticResource ActualWidthCorrector}, ConverterParameter=87}" Style="{DynamicResource lbDesign}"/>
+                                </StackPanel>
+                                <StackPanel Grid.Row="2" Orientation="Horizontal">
+                                    <TextBox Text="Illustration:" Name="tbIllustration" Grid.Row="2" Style="{DynamicResource lbDesign}"/>
+                                    <TextBox Grid.Row="2" Margin="2 0 0 0" Text="{Binding IllustrationText, StringFormat={}{0}}" TextWrapping="Wrap" Width="{Binding ActualWidth, ElementName=lbCards, Converter={StaticResource ActualWidthCorrector}, ConverterParameter=87}" Style="{DynamicResource lbDesign}"/>
+                                </StackPanel>
+                            </Grid>
+                        </StackPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+
             <Grid Grid.Column="2">
                 <TextBlock Name="tbCardImage" Visibility="Hidden" TextWrapping="Wrap" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="50" Foreground="Cyan"/>
                 <Image Name="imgCardImage"/>
             </Grid>
-            <!--#endregion-->
         </Grid>
-        <!--#endregion-->
+        <!--#endregion -->
 
         <!--#region Bottom-->
-        <Grid Grid.Row="2">
+        <Grid Grid.Row="3">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition/>
                 <ColumnDefinition Width="Auto"/>
