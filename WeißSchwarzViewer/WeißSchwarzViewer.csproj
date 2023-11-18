@@ -7,13 +7,19 @@
     <UseWPF>true</UseWPF>
     <ApplicationIcon>ws.ico</ApplicationIcon>
     <FileVersion>1.5</FileVersion>
+	<VersionPrefix>1.5</VersionPrefix>
+	<Authors>Nemas</Authors>
     <PackageProjectUrl>https://github.com/DjNemas/WeissSchwarz</PackageProjectUrl>
-    <Copyright>djnemas</Copyright>
+    <Copyright>Nemas</Copyright>
     <Description>With this Viewer, you can see all Weiß Schwarz Sets and Cards.
 It also has some additional functionality, like dowloading all images or text of cards.</Description>
     <Title>Weiß Schwarz Viewer</Title>
     <SignAssembly>False</SignAssembly>
     <AssemblyOriginatorKeyFile>C:\Users\denis\Desktop\OBS Overlay\Hatsune Miku Overlay\Icon Transparent.ico</AssemblyOriginatorKeyFile>
+    <RepositoryUrl>https://github.com/DjNemas/WeissSchwarz</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>Weiß Schwarz,Weiß,Schwarz,Nemas,TCG,Cards,Sets,Viewer</PackageTags>
+    <PackageReleaseNotes>Added Sets search Field</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
